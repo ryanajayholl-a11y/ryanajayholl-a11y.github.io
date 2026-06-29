@@ -82,14 +82,15 @@
     .avatar:hover { filter: grayscale(0%); }
 
     h1 {
-      font-size: 30px;
+      font-size: 34px;
       font-weight: 600;
       letter-spacing: -0.01em;
-      margin: 0 0 6px;
+      margin: 0 0 8px;
     }
 
     .tagline {
       color: var(--fg);
+      font-size: 17px;
       margin: 0 0 28px;
     }
 
@@ -144,6 +145,13 @@
     }
 
     .muted { color: var(--muted); }
+    .muted a { color: var(--muted); }
+    .muted a:hover, .muted a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+    a.quiet { color: inherit; }
+    a.quiet:hover, a.quiet:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .stanford { color: #b9636a; }
 
     footer {
       border-top: 1px solid var(--rule);
@@ -152,6 +160,8 @@
       font-size: 13px;
     }
     footer p { margin: 0 0 4px; }
+    footer a { color: var(--muted); }
+    footer a:hover, footer a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 
     @media (max-width: 480px) {
       .wrap { padding: 48px 20px 72px; }
@@ -163,8 +173,60 @@
       }
     }
 
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      padding: 32px;
+      box-sizing: border-box;
+    }
+    .lightbox.open {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: lb-fade 0.18s ease;
+    }
+    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+    .lightbox-figure {
+      margin: 0;
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .lightbox-figure img {
+      max-width: 100%;
+      max-height: 82vh;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .lightbox-figure figcaption {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      background: none;
+      border: none;
+      color: var(--fg);
+      font-size: 34px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 10px;
+    }
+    .lightbox-close:hover, .lightbox-close:focus-visible { color: var(--accent); }
+
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; }
+      .lightbox.open { animation: none; }
     }
   </style>
 </head>
@@ -174,9 +236,7 @@
       <div class="header-text">
         <h1>Ryan Hollingshead</h1>
         <p class="tagline">
-          Product Operations @ <a href="#">Two Dots</a>
-          <span class="sep">·</span> fintech &amp; AI
-          <span class="sep">·</span> sports, business, investing
+          Product @ <a class="quiet" href="https://www.twodots.com/">Two Dots</a> <span class="muted">(Series A fintech startup)</span>
         </p>
       </div>
       <img class="avatar" src="profile.png" alt="Ryan Hollingshead" />
@@ -192,18 +252,19 @@
     <section>
       <h2>about</h2>
       <p>
-        I work in Product Operations at <a href="#">Two Dots</a>, a Series A fintech
-        startup using machine learning and behavioral data to detect and prevent fraud at scale.
-        I build retention and financial dashboards, resolve edge-case rental applications, and
-        work alongside the engineering team on the product roadmap.
+        I'm currently working in SF at a Series A fintech startup called
+        <a class="quiet" href="https://www.twodots.com/">Two Dots</a>. We're automating the
+        income verification process for rental applications.
+        My role sits at the intersection of product, bizops, and finance.
       </p>
       <p>
-        I studied Political Science (Data Science and International Relations) at Stanford, with
-        Graduate School of Business coursework in negotiation and new-venture formation. Some additional past experiences:
+        Before this, I graduated from <span class="stanford">Stanford</span>, where I concentrated on International Relations
+        and Data Science within the Political Science major. I also was lucky enough to take some
+        GSB courses focused on startups, negotiations, and sports business. Some additional past experiences:
       </p>
       <ul>
-        <li>Healthcare consulting <span class="muted">@ Mindfrog</span></li>
-        <li>Venture capital <span class="muted">@ Correlation Ventures</span></li>
+        <li>Healthcare consulting <span class="muted">@ <a href="https://www.mindfroggroup.com/">Mindfrog</a></span></li>
+        <li>Venture capital <span class="muted">@ <a href="https://correlationvc.com/">Correlation Ventures</a></span></li>
         <li>ML internship <span class="muted">@ Dynam.AI</span></li>
       </ul>
     </section>
@@ -211,27 +272,82 @@
     <section>
       <h2>writing</h2>
       <p>
-        I write <a href="https://ryanholl.substack.com">Holl's Playbook</a> —
-        sports, business, investing, and everything in between. A few pieces:
+        In addition to startups and investing, I think a lot about sports, especially football
+        and soccer. Right now, France is my pick to win the World Cup. I share my thoughts on
+        my <a class="quiet" href="https://ryanholl.substack.com">Substack</a>. A few pieces from there:
       </p>
       <ul>
-        <li><a href="#">Post title one</a></li>
-        <li><a href="#">Post title two</a></li>
-        <li><a href="#">Post title three</a></li>
+        <li><a href="https://ryanholl.substack.com/p/west-hams-relegation-and-what-we">West Ham's relegation — and what we can learn from it</a></li>
+        <li><a href="https://ryanholl.substack.com/p/sometimes-the-human-element-cannot">Sometimes, the Human Element Cannot be Replaced</a></li>
+        <li><a href="https://ryanholl.substack.com/p/david-protein-diving-deeper">David Protein: Diving Deeper</a></li>
       </ul>
     </section>
 
     <section>
-      <h2>outside of work</h2>
-      <p class="muted">
-        Golf, the LA Chargers, and Tottenham Hotspur.
+      <h2>in addition</h2>
+      <p>
+        I'm an avid golfer. My favorite course as of now is
+        <a class="photo" href="tearai.jpg" data-img="tearai.jpg" data-caption="Te Arai South, New Zealand">Te Arai South</a> in New Zealand.
+      </p>
+      <p>
+        I've also gotten more interested in hiking recently.
+        <a class="photo" href="presidio.jpg" data-img="presidio.jpg" data-caption="The Presidio, San Francisco">The Presidio</a> is a great local
+        option. Also had a great time at the
+        <a class="photo" href="jenner.jpg" data-img="jenner.jpg" data-caption="Jenner Headlands Preserve">Jenner Headlands Preserve</a>.
+      </p>
+      <p>
+        I'm also a Chargers and Tottenham fan. Big things coming with De Zerbi as our new manager!
       </p>
     </section>
 
     <footer>
       <p>© 2026 Ryan Hollingshead</p>
-      <p>ryanholl@alumni.stanford.edu</p>
+      <p><a href="mailto:ryanholl@alumni.stanford.edu">ryanholl@alumni.stanford.edu</a></p>
     </footer>
   </main>
+
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <figure class="lightbox-figure">
+      <img id="lightbox-img" src="" alt="" />
+      <figcaption id="lightbox-caption"></figcaption>
+    </figure>
+  </div>
+  <script>
+    (function () {
+      var lb = document.getElementById('lightbox');
+      var lbImg = document.getElementById('lightbox-img');
+      var lbCap = document.getElementById('lightbox-caption');
+      var closeBtn = lb.querySelector('.lightbox-close');
+
+      function open(src, caption, alt) {
+        lbImg.src = src;
+        lbImg.alt = alt || caption || '';
+        lbCap.textContent = caption || '';
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function close() {
+        lb.classList.remove('open');
+        lbImg.src = '';
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('a.photo').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          open(el.getAttribute('data-img'), el.getAttribute('data-caption'), el.textContent);
+        });
+      });
+
+      lb.addEventListener('click', function (e) {
+        if (e.target === lb || e.target === closeBtn) close();
+      });
+      closeBtn.addEventListener('click', close);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && lb.classList.contains('open')) close();
+      });
+    })();
+  </script>
 </body>
 </html>
