@@ -350,6 +350,18 @@
         if (e.key === 'Escape' && lb.classList.contains('open')) close();
       });
     })();
+
+    // Open external links in a new tab (skip in-page photo links and mailto)
+    (function () {
+      document.querySelectorAll('a[href]').forEach(function (a) {
+        var href = a.getAttribute('href') || '';
+        var isExternal = /^https?:\/\//i.test(href);
+        if (isExternal && !a.classList.contains('photo')) {
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
+        }
+      });
+    })();
   </script>
 </body>
 </html>
