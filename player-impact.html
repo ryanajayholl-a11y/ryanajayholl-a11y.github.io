@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Impact — Points Above Replacement</title>
+<style>
+  :root{
+    --bg:#f4f4f2; --surface:#fcfcfb; --surface-2:#f0efec; --border:#e2e1dc;
+    --text-1:#0b0b0b; --text-2:#52514e; --text-3:#8a8984;
+    --pos-def:#4a3aa7; --pos-mid:#eb6834; --pos-fwd:#1baf7a;
+    --pos:#2a78d6; --neg:#e34948; --accent:#2a78d6;
+    --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      --bg:#141413; --surface:#1e1e1c; --surface-2:#262624; --border:#33322f;
+      --text-1:#f5f5f0; --text-2:#c3c2b7; --text-3:#8f8e86;
+      --pos-def:#9085e9; --pos-mid:#e07a4a; --pos-fwd:#22c58a;
+      --pos:#3987e5; --neg:#e66767; --accent:#3987e5;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141413; --surface:#1e1e1c; --surface-2:#262624; --border:#33322f;
+    --text-1:#f5f5f0; --text-2:#c3c2b7; --text-3:#8f8e86;
+    --pos-def:#9085e9; --pos-mid:#e07a4a; --pos-fwd:#22c58a;
+    --pos:#3987e5; --neg:#e66767; --accent:#3987e5;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text-1);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.45;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+  header h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;}
+  header p.sub{margin:0;color:var(--text-2);font-size:15px;max-width:760px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);}
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:18px 26px;align-items:flex-end;padding:18px 20px;margin:22px 0;}
+  .ctl{display:flex;flex-direction:column;gap:7px;}
+  .ctl label{font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;}
+  .slider-row{display:flex;align-items:center;gap:12px;min-width:260px;}
+  input[type=range]{width:190px;accent-color:var(--accent);}
+  .slider-val{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;min-width:118px;color:var(--text-1);}
+  .chips{display:flex;gap:6px;}
+  .chip{border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);
+    padding:7px 13px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;user-select:none;transition:.12s;}
+  .chip:hover{border-color:var(--text-3);}
+  .chip.active{background:var(--text-1);color:var(--surface);border-color:var(--text-1);}
+  select,input[type=search]{background:var(--surface-2);border:1px solid var(--border);color:var(--text-1);
+    padding:8px 11px;border-radius:9px;font-size:14px;font-family:inherit;min-width:170px;}
+  input[type=search]{min-width:190px;}
+  /* spotlight */
+  .spot{padding:22px 24px;margin-bottom:22px;display:grid;grid-template-columns:1.15fr 1fr;gap:26px;}
+  .spot .who{display:flex;flex-direction:column;gap:10px;}
+  .spot .name{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1;}
+  .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--text-2);font-size:14px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+    padding:4px 10px;border-radius:999px;color:#fff;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .sentence{color:var(--text-2);font-size:14.5px;line-height:1.5;}
+  .sentence b{color:var(--text-1);}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start;}
+  .stat{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 14px;}
+  .stat .k{font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;}
+  .stat .v{font-size:23px;font-weight:750;font-variant-numeric:tabular-nums;margin-top:3px;letter-spacing:-.02em;}
+  .stat.big .v{font-size:27px;}
+  .subtle{display:flex;gap:18px;margin-top:2px;font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums;}
+  .subtle b{color:var(--text-1);font-weight:700;}
+  /* section titles */
+  h2.sec{font-size:15px;font-weight:700;margin:26px 2px 12px;letter-spacing:-.01em;}
+  h2.sec span{color:var(--text-3);font-weight:500;}
+  /* chart */
+  .chart{padding:16px 20px 20px;}
+  .legend{display:flex;gap:16px;margin:2px 2px 14px;font-size:12.5px;color:var(--text-2);}
+  .legend .li{display:flex;align-items:center;gap:6px;}
+  .barrow{display:grid;grid-template-columns:158px 1fr 52px;align-items:center;gap:10px;height:28px;cursor:pointer;}
+  .barrow:hover .bname{color:var(--text-1);}
+  .bname{font-size:13px;color:var(--text-2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .btrack{height:15px;background:var(--surface-2);border-radius:5px;position:relative;overflow:hidden;}
+  .bfill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;}
+  .bval{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+  /* table */
+  .tablewrap{overflow-x:auto;border-radius:14px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);}
+  thead th{position:sticky;top:0;background:var(--surface);text-align:right;padding:11px 12px;
+    font-size:11.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.03em;
+    border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;}
+  thead th.l{text-align:left;}
+  thead th:hover{color:var(--text-1);}
+  th.sorted::after{content:" \25BE";font-size:10px;}
+  th.sorted.asc::after{content:" \25B4";}
+  tbody td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);
+    font-variant-numeric:tabular-nums;white-space:nowrap;}
+  tbody td.l{text-align:left;}
+  tbody tr{cursor:pointer;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr.sel{background:color-mix(in srgb,var(--accent) 12%,var(--surface));}
+  .pdot{display:inline-flex;align-items:center;gap:7px;}
+  .impbar{display:inline-grid;grid-template-columns:1fr 1fr;width:104px;height:13px;vertical-align:middle;
+    background:var(--surface-2);border-radius:4px;overflow:hidden;margin-right:8px;}
+  .impbar i{display:block;height:100%;}
+  .impbar .lft{justify-self:end;}
+  .impval{font-weight:700;}
+  .pos-p{color:var(--pos);} .neg-p{color:var(--neg);}
+  .rk{color:var(--text-3);font-weight:600;}
+  /* footer */
+  footer{margin-top:30px;color:var(--text-3);font-size:12.5px;line-height:1.6;}
+  footer b{color:var(--text-2);}
+  details{margin-top:8px;} summary{cursor:pointer;color:var(--text-2);font-weight:600;}
+  .themebtn{position:fixed;top:14px;right:16px;background:var(--surface);border:1px solid var(--border);
+    color:var(--text-2);border-radius:9px;padding:7px 11px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);}
+  /* tooltip */
+  #tip{position:fixed;pointer-events:none;background:var(--text-1);color:var(--surface);
+    padding:8px 11px;border-radius:8px;font-size:12.5px;line-height:1.5;opacity:0;transition:opacity .1s;
+    z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.28);max-width:250px;}
+  #tip b{font-weight:700;}
+  @media(max-width:720px){.spot{grid-template-columns:1fr;}.barrow{grid-template-columns:120px 1fr 46px;}}
+</style>
+</head>
+<body>
+<button class="themebtn" id="themebtn">◐ Theme</button>
+<div class="wrap">
+  <header>
+    <h1>Player Impact — Points Above Replacement</h1>
+    <p class="sub">Projected league points each player adds to their club versus a <b>replacement-level player at the same position</b>. Move the slider to set how good "replacement level" is; everything recomputes live.</p>
+  </header>
+
+  <div class="card toolbar">
+    <div class="ctl">
+      <label>Replacement level</label>
+      <div class="slider-row">
+        <input type="range" id="repl" min="5" max="50" step="5" value="20">
+        <span class="slider-val" id="replval"></span>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>Position</label>
+      <div class="chips" id="poschips">
+        <span class="chip active" data-pos="All">All</span>
+        <span class="chip" data-pos="Defender">DEF</span>
+        <span class="chip" data-pos="Midfielder">MID</span>
+        <span class="chip" data-pos="Forward">FWD</span>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>Team</label>
+      <select id="teamsel"><option value="All">All teams</option></select>
+    </div>
+    <div class="ctl">
+      <label>Search</label>
+      <input type="search" id="search" placeholder="Player name…">
+    </div>
+  </div>
+
+  <div class="card spot" id="spot"></div>
+
+  <h2 class="sec">Top 20 by impact <span id="chartsub"></span></h2>
+  <div class="legend">
+    <span class="li"><span class="dot" style="background:var(--pos-def)"></span>Defender</span>
+    <span class="li"><span class="dot" style="background:var(--pos-mid)"></span>Midfielder</span>
+    <span class="li"><span class="dot" style="background:var(--pos-fwd)"></span>Forward</span>
+  </div>
+  <div class="card chart" id="chart"></div>
+
+  <h2 class="sec">All players <span id="tablesub"></span></h2>
+  <div class="card tablewrap">
+    <table id="tbl">
+      <thead><tr>
+        <th class="l" data-k="rank">#</th>
+        <th class="l" data-k="name">Player</th>
+        <th class="l" data-k="team">Team</th>
+        <th class="l" data-k="pos">Pos</th>
+        <th data-k="K">Team pts</th>
+        <th data-k="ptsRepl">Pts w/ repl</th>
+        <th data-k="impact">Impact (pts)</th>
+        <th data-k="impact90">Impact / 90</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <div><b>Method.</b> Impact = points(current squad) − points(the player's minutes reassigned to a replacement-level player of the same position), pushed through the same team-strength → GF/GA → points pipeline as the model's league table. Replacement level = the chosen percentile of Def/90, Att/90 and Poss/90 <i>within each position</i>, so defenders are judged against defenders and forwards against forwards. League standardisation and coaching xG/xGA are held at baseline.</div>
+    <details><summary id="exsum"></summary><div id="exlist" style="margin-top:6px;"></div></details>
+    <div style="margin-top:8px;">Source: <b>2026_EPL_PS_Projections.xlsx</b> · generated <span id="gen"></span>. Positive impact = above replacement (blue); negative = below (red).</div>
+  </footer>
+</div>
+<div id="tip"></div>
+<script id="data" type="application/json">{"consts":{"N24":7.744616,"O24":6.650673,"P24":55.154305,"Q24":53.94326,"Y24":54.685714,"Y25":10.883995,"Z24":55.33422,"Z25":8.33097,"I30":1093.714286,"I31":10.800654,"I34":0.5,"I35":0.5,"AE2":1,"cGF":0.6335,"cGA":0.5943},"teams":{"Arsenal":{"AC":3.99997,"AD":7.28188,"AE":6.12757,"P":64.36667,"Q":30.56667,"K":72.25138,"GF":68.33065,"GA":36.41014,"den":39112.1},"Manchester City":{"AC":3.99119,"AD":8.60596,"AE":7.26561,"P":67.02667,"Q":52.56,"K":70.15033,"GF":76.27176,"GA":48.41039,"den":37799.7},"Chelsea":{"AC":3.15787,"AD":6.70875,"AE":5.79665,"P":74.87174,"Q":46.54253,"K":64.34689,"GF":70.91102,"GA":52.46121,"den":43538.5},"Liverpool FC":{"AC":3.41481,"AD":7.79252,"AE":6.11609,"P":62.9,"Q":54.3,"K":61.83533,"GF":69.37803,"GA":55.0532,"den":30934.6},"Brighton & Hove Albion":{"AC":5.06576,"AD":4.94886,"AE":5.78544,"P":58.3,"Q":51.1,"K":59.01372,"GF":56.57297,"GA":46.15131,"den":34360.7},"Manchester United":{"AC":4.7946,"AD":6.78239,"AE":5.70831,"P":53.36853,"Q":54.13041,"K":59.56432,"GF":60.43564,"GA":49.34228,"den":36994.7},"Fulham":{"AC":5.26735,"AD":4.06346,"AE":5.82248,"P":53.85228,"Q":48.24249,"K":57.29332,"GF":51.34774,"GA":43.47625,"den":30257.3},"Tottenham Hotspur":{"AC":4.80679,"AD":4.357,"AE":5.74814,"P":60.0541,"Q":53.57927,"K":56.60078,"GF":55.29698,"GA":48.85128,"den":42563.9},"Leeds United":{"AC":5.26323,"AD":4.69646,"AE":3.96305,"P":54.02021,"Q":48.97639,"K":54.19227,"GF":50.3908,"GA":47.67417,"den":33297.9},"Brentford":{"AC":4.83818,"AD":5.56119,"AE":3.2412,"P":60.3,"Q":54.4,"K":52.79602,"GF":55.2453,"GA":55.19828,"den":37775.0},"Newcastle United":{"AC":4.84987,"AD":5.30423,"AE":5.05689,"P":48.58314,"Q":53.00776,"K":53.83626,"GF":51.76149,"GA":49.73431,"den":29345.4},"Nottingham Forest":{"AC":4.53234,"AD":4.87407,"AE":3.91575,"P":59.23333,"Q":51.4,"K":52.96378,"GF":53.49484,"GA":53.05007,"den":31705.6},"Aston Villa":{"AC":3.59886,"AD":4.50225,"AE":6.15176,"P":51.23333,"Q":52.86667,"K":52.1507,"GF":52.17346,"GA":53.00966,"den":30094.1},"Everton":{"AC":5.63202,"AD":4.8035,"AE":3.51078,"P":46.66667,"Q":50.66667,"K":51.34953,"GF":46.35596,"GA":48.15654,"den":34694.4},"Bournemouth":{"AC":4.00558,"AD":6.30804,"AE":3.71107,"P":55.57373,"Q":58.7076,"K":49.60774,"GF":56.35988,"GA":61.75114,"den":29234.8},"Crystal Palace":{"AC":3.71927,"AD":5.74683,"AE":2.37972,"P":64.01727,"Q":55.71111,"K":46.05071,"GF":56.21531,"GA":67.58229,"den":32595.4},"Sunderland":{"AC":4.54848,"AD":4.10889,"AE":3.58703,"P":37.59192,"Q":55.6285,"K":42.00011,"GF":39.59156,"GA":56.67777,"den":31682.9},"Coventry City":{"AC":3.62361,"AD":4.51758,"AE":3.37457,"P":47.75247,"Q":60.43235,"K":39.67274,"GF":45.6498,"GA":67.05177,"den":32220.9},"Ipswich Town":{"AC":3.64073,"AD":4.69972,"AE":3.04403,"P":50.03322,"Q":62.60002,"K":38.81732,"GF":46.8309,"GA":69.75015,"den":34575.2},"Hull City":{"AC":4.00943,"AD":2.97524,"AE":2.20087,"P":33.34082,"Q":83.44677,"K":20.42955,"GF":31.10021,"GA":83.92208,"den":26179.3}},"players":[{"name":"Declan Rice","team":"Arsenal","pos":"Midfielder","min":3041.7,"ps":22.604,"dfn":7.0649,"att":7.3573,"poss":8.1816},{"name":"William Saliba","team":"Arsenal","pos":"Defender","min":2851.7,"ps":19.791,"dfn":7.9689,"att":-1.3459,"poss":13.1684},{"name":"Martín Zubimendi","team":"Arsenal","pos":"Midfielder","min":2827.9,"ps":17.115,"dfn":6.5287,"att":2.2695,"poss":8.3171},{"name":"Bruno Guimarães","team":"Arsenal","pos":"Midfielder","min":2807.4,"ps":15.097,"dfn":1.0219,"att":7.1733,"poss":6.9022},{"name":"Gabriel Magalhães","team":"Arsenal","pos":"Defender","min":2683.9,"ps":19.737,"dfn":8.801,"att":1.3784,"poss":9.5576},{"name":"Jurriën Timber","team":"Arsenal","pos":"Defender","min":2445.3,"ps":11.868,"dfn":4.4611,"att":1.9405,"poss":5.4664},{"name":"Viktor Gyökeres","team":"Arsenal","pos":"Forward","min":2216.7,"ps":13.231,"dfn":-1.3477,"att":16.0817,"poss":-1.5034},{"name":"Christos Tzolis","team":"Arsenal","pos":"Midfielder","min":2205.7,"ps":21.317,"dfn":0.9715,"att":17.9207,"poss":2.4245},{"name":"Bukayo Saka","team":"Arsenal","pos":"Forward","min":2186.1,"ps":21.737,"dfn":0.686,"att":19.3036,"poss":1.7477},{"name":"Eberechi Eze","team":"Arsenal","pos":"Midfielder","min":2123.6,"ps":20.311,"dfn":0.9678,"att":15.4697,"poss":3.8732},{"name":"Piero Hincapié","team":"Arsenal","pos":"Defender","min":1929.0,"ps":16.821,"dfn":8.0547,"att":0.5446,"poss":8.2216},{"name":"Martin Ødegaard","team":"Arsenal","pos":"Midfielder","min":1890.6,"ps":19.288,"dfn":1.2649,"att":11.4098,"poss":6.6134},{"name":"Cristhian Mosquera","team":"Arsenal","pos":"Defender","min":1833.4,"ps":15.046,"dfn":6.8206,"att":-1.6649,"poss":9.8905},{"name":"Riccardo Calafiori","team":"Arsenal","pos":"Defender","min":1569.9,"ps":17.206,"dfn":6.0288,"att":4.2562,"poss":6.9208},{"name":"Gabriel Martinelli","team":"Arsenal","pos":"Forward","min":1563.6,"ps":15.363,"dfn":0.34,"att":14.1477,"poss":0.8757},{"name":"Noni Madueke","team":"Arsenal","pos":"Forward","min":1443.3,"ps":17.214,"dfn":0.0663,"att":15.032,"poss":2.1152},{"name":"Mikel Merino","team":"Arsenal","pos":"Midfielder","min":1370.1,"ps":13.764,"dfn":2.4052,"att":8.1591,"poss":3.2},{"name":"Ben White","team":"Arsenal","pos":"Defender","min":1181.9,"ps":14.533,"dfn":6.6149,"att":1.8136,"poss":6.1047},{"name":"Myles Lewis-Skelly","team":"Arsenal","pos":"Defender","min":940.3,"ps":8.017,"dfn":2.1518,"att":-2.4988,"poss":8.3639},{"name":"Ezri Konsa","team":"Aston Villa","pos":"Defender","min":3013,"ps":17.098,"dfn":7.307,"att":-1.5111,"poss":11.302},{"name":"João Gomes","team":"Aston Villa","pos":"Midfielder","min":2859,"ps":9.859,"dfn":1.4278,"att":1.6715,"poss":6.7596},{"name":"Ollie Watkins","team":"Aston Villa","pos":"Forward","min":2835.6,"ps":14.518,"dfn":-0.5741,"att":15.1921,"poss":-0.1003},{"name":"Matty Cash","team":"Aston Villa","pos":"Defender","min":2625.1,"ps":12.231,"dfn":4.0641,"att":3.0545,"poss":5.1126},{"name":"John McGinn","team":"Aston Villa","pos":"Midfielder","min":2311.3,"ps":8.973,"dfn":-0.3034,"att":5.6415,"poss":3.6353},{"name":"Johan Manzambi","team":"Aston Villa","pos":"Midfielder","min":1939.0,"ps":17.095,"dfn":4.2179,"att":7.9922,"poss":4.885},{"name":"Pau Torres","team":"Aston Villa","pos":"Defender","min":1886.7,"ps":15.855,"dfn":6.3427,"att":-0.4808,"poss":9.993},{"name":"Emiliano Buendía","team":"Aston Villa","pos":"Midfielder","min":1784,"ps":12.511,"dfn":0.0925,"att":8.9655,"poss":3.453},{"name":"Amadou Onana","team":"Aston Villa","pos":"Midfielder","min":1779.4,"ps":16.401,"dfn":7.1025,"att":2.3188,"poss":6.9801},{"name":"Alejandro Garnacho","team":"Aston Villa","pos":"Forward","min":1729.7,"ps":16.805,"dfn":0.3842,"att":13.4567,"poss":2.9641},{"name":"Boubacar Kamara","team":"Aston Villa","pos":"Midfielder","min":1542.6,"ps":12.192,"dfn":4.0853,"att":0.0392,"poss":8.0677},{"name":"Ian Maatsen","team":"Aston Villa","pos":"Defender","min":1423.3,"ps":17.316,"dfn":6.5458,"att":4.9765,"poss":5.7939},{"name":"Tyrone Mings","team":"Aston Villa","pos":"Defender","min":1255.7,"ps":19.078,"dfn":9.5401,"att":-0.4764,"poss":10.014},{"name":"Lamare Bogarde","team":"Aston Villa","pos":"Midfielder","min":1104,"ps":6.153,"dfn":1.8425,"att":-2.6755,"poss":6.986},{"name":"Ross Barkley","team":"Aston Villa","pos":"Midfielder","min":1044.6,"ps":20.794,"dfn":3.6997,"att":10.2705,"poss":6.8237},{"name":"Victor Lindelöf","team":"Aston Villa","pos":"Defender","min":961.1,"ps":16.286,"dfn":7.03,"att":-1.2253,"poss":10.4815},{"name":"Adrien Truffert","team":"Bournemouth","pos":"Defender","min":2911.3,"ps":13.127,"dfn":6.826,"att":1.832,"poss":4.4695},{"name":"Evanilson","team":"Bournemouth","pos":"Forward","min":2469.3,"ps":11.227,"dfn":-0.2448,"att":11.2025,"poss":0.2693},{"name":"Marcus Tavernier","team":"Bournemouth","pos":"Midfielder","min":2422.4,"ps":16.86,"dfn":1.7363,"att":12.0574,"poss":3.0663},{"name":"Alex Scott","team":"Bournemouth","pos":"Midfielder","min":1993.6,"ps":14.907,"dfn":4.6407,"att":4.9164,"poss":5.3502},{"name":"James Hill","team":"Bournemouth","pos":"Defender","min":1880.1,"ps":18.962,"dfn":14.7151,"att":0.1393,"poss":4.1073},{"name":"Tyler Adams","team":"Bournemouth","pos":"Midfielder","min":1840.3,"ps":12.694,"dfn":5.1025,"att":0.4683,"poss":7.1229},{"name":"Lewis Cook","team":"Bournemouth","pos":"Midfielder","min":1766.9,"ps":13.026,"dfn":6.793,"att":1.1566,"poss":5.0759},{"name":"Bafodé Diakité","team":"Bournemouth","pos":"Defender","min":1659.9,"ps":17.115,"dfn":7.773,"att":-0.6578,"poss":9.9999},{"name":"Ryan Christie","team":"Bournemouth","pos":"Midfielder","min":1589.1,"ps":15.103,"dfn":3.7374,"att":7.3321,"poss":4.0339},{"name":"Eli Junior Kroupi","team":"Bournemouth","pos":"Forward","min":1546.1,"ps":15.559,"dfn":-0.5035,"att":14.5952,"poss":1.4672},{"name":"Justin Kluivert","team":"Bournemouth","pos":"Midfielder","min":1494,"ps":10.446,"dfn":-3.0942,"att":11.6901,"poss":1.8502},{"name":"Álvaro Rodriguez","team":"Bournemouth","pos":"Forward","min":1589.9,"ps":11.845,"dfn":1.2981,"att":12.2223,"poss":-1.6759},{"name":"António Silva","team":"Bournemouth","pos":"Defender","min":1542.3,"ps":15.16,"dfn":6.457,"att":0.7269,"poss":7.9759},{"name":"Adam Smith","team":"Bournemouth","pos":"Defender","min":1394.7,"ps":3.911,"dfn":2.8482,"att":-1.3543,"poss":2.4168},{"name":"Rayan","team":"Bournemouth","pos":"Midfielder","min":1119,"ps":16.533,"dfn":3.7304,"att":11.0949,"poss":1.7079},{"name":"David Brooks","team":"Bournemouth","pos":"Midfielder","min":1062.4,"ps":19.584,"dfn":1.0325,"att":16.5324,"poss":2.0191},{"name":"Amine Adli","team":"Bournemouth","pos":"Forward","min":953.5,"ps":13.043,"dfn":0.6417,"att":10.4956,"poss":1.9053},{"name":"Nathan Collins","team":"Brentford","pos":"Defender","min":3053.9,"ps":19.241,"dfn":11.5812,"att":0.4025,"poss":7.2571},{"name":"Igor Thiago","team":"Brentford","pos":"Forward","min":2998.2,"ps":12.942,"dfn":-0.4686,"att":13.7876,"poss":-0.3769},{"name":"Michael Kayode","team":"Brentford","pos":"Defender","min":2996.3,"ps":11.372,"dfn":6.7584,"att":0.3515,"poss":4.262},{"name":"Jaidon Anthony","team":"Brentford","pos":"Midfielder","min":2693.8,"ps":13.051,"dfn":1.2638,"att":9.1214,"poss":2.6662},{"name":"Sepp van den Berg","team":"Brentford","pos":"Defender","min":2692.6,"ps":20.995,"dfn":11.9686,"att":1.5842,"poss":7.4418},{"name":"Kevin Schade","team":"Brentford","pos":"Midfielder","min":2607.7,"ps":10.52,"dfn":1.9529,"att":10.2356,"poss":-1.6687},{"name":"Keane Lewis-Potter","team":"Brentford","pos":"Defender","min":2229,"ps":12.068,"dfn":3.4667,"att":6.523,"poss":2.0784},{"name":"Mikkel Damsgaard","team":"Brentford","pos":"Midfielder","min":2146.3,"ps":13.923,"dfn":3.9384,"att":7.501,"poss":2.4833},{"name":"Mamadou Sangare","team":"Brentford","pos":"Midfielder","min":2081.2,"ps":17.712,"dfn":5.5956,"att":5.756,"poss":6.3608},{"name":"Dango Ouattara","team":"Brentford","pos":"Midfielder","min":2053.4,"ps":14.375,"dfn":4.2883,"att":12.1695,"poss":-2.0832},{"name":"Yehor Yarmoliuk","team":"Brentford","pos":"Midfielder","min":2048.6,"ps":11.667,"dfn":4.3851,"att":1.0846,"poss":6.197},{"name":"Vitaly Janelt","team":"Brentford","pos":"Midfielder","min":1919.9,"ps":14.393,"dfn":5.9416,"att":2.5238,"poss":5.9275},{"name":"Mathias Jensen","team":"Brentford","pos":"Midfielder","min":1862.7,"ps":13.687,"dfn":2.9088,"att":6.4994,"poss":4.279},{"name":"Kristoffer Ajer","team":"Brentford","pos":"Defender","min":1723,"ps":13.68,"dfn":8.8819,"att":1.0806,"poss":3.7178},{"name":"Antoni Milambo","team":"Brentford","pos":"Midfielder","min":1409.4,"ps":8.451,"dfn":1.6457,"att":3.8292,"poss":2.9761},{"name":"Rico Henry","team":"Brentford","pos":"Defender","min":1334,"ps":5.602,"dfn":4.2103,"att":-1.104,"poss":2.4955},{"name":"Callum Wilson","team":"Brentford","pos":"Forward","min":1208.2,"ps":11.576,"dfn":-1.4162,"att":15.3678,"poss":-2.3757},{"name":"Aaron Hickey","team":"Brentford","pos":"Defender","min":716.8,"ps":10.303,"dfn":5.3813,"att":-0.2921,"poss":5.2143},{"name":"Ferdi Kadıoğlu","team":"Brighton & Hove Albion","pos":"Defender","min":3134,"ps":14.161,"dfn":5.3078,"att":3.4216,"poss":5.4317},{"name":"Lewis Dunk","team":"Brighton & Hove Albion","pos":"Defender","min":2630.6,"ps":23.486,"dfn":9.381,"att":-0.0839,"poss":14.1889},{"name":"Pascal Struijk","team":"Brighton & Hove Albion","pos":"Defender","min":2449.8,"ps":20.391,"dfn":9.798,"att":0.9095,"poss":9.6837},{"name":"Costinha","team":"Brighton & Hove Albion","pos":"Defender","min":2327.2,"ps":8.625,"dfn":3.5538,"att":3.1125,"poss":1.9589},{"name":"Pascal Groß","team":"Brighton & Hove Albion","pos":"Midfielder","min":2325.3,"ps":18.521,"dfn":2.6334,"att":7.4329,"poss":8.4551},{"name":"Luka Vušković","team":"Brighton & Hove Albion","pos":"Defender","min":2231.3,"ps":24.319,"dfn":13.963,"att":3.2005,"poss":7.1555},{"name":"Diego Gómez","team":"Brighton & Hove Albion","pos":"Midfielder","min":2136,"ps":13.404,"dfn":2.8428,"att":8.0336,"poss":2.5277},{"name":"Yankuba Minteh","team":"Brighton & Hove Albion","pos":"Midfielder","min":2048.5,"ps":10.812,"dfn":1.2882,"att":10.798,"poss":-1.2738},{"name":"Kaoru Mitoma","team":"Brighton & Hove Albion","pos":"Midfielder","min":1941.1,"ps":13.357,"dfn":-0.7247,"att":11.2687,"poss":2.8128},{"name":"Carlos Baleba","team":"Brighton & Hove Albion","pos":"Midfielder","min":1915.7,"ps":13.787,"dfn":4.8829,"att":2.178,"poss":6.7263},{"name":"Georginio Rutter","team":"Brighton & Hove Albion","pos":"Midfielder","min":1888.1,"ps":9.0,"dfn":-0.3644,"att":10.1542,"poss":-0.7901},{"name":"Yasin Ayari","team":"Brighton & Hove Albion","pos":"Midfielder","min":1768.0,"ps":14.385,"dfn":2.8643,"att":5.5893,"poss":5.9312},{"name":"Maxim De Cuyper","team":"Brighton & Hove Albion","pos":"Defender","min":1756.8,"ps":14.932,"dfn":3.1683,"att":6.7026,"poss":5.061},{"name":"Jack Hinshelwood","team":"Brighton & Hove Albion","pos":"Midfielder","min":1654,"ps":13.808,"dfn":0.776,"att":8.1059,"poss":4.9258},{"name":"Mats Wieffer","team":"Brighton & Hove Albion","pos":"Defender","min":1653.9,"ps":15.083,"dfn":6.4716,"att":2.9128,"poss":5.6985},{"name":"Olivier Boscagli","team":"Brighton & Hove Albion","pos":"Defender","min":1274.0,"ps":18.988,"dfn":9.0661,"att":-0.1686,"poss":10.0904},{"name":"Michael Svoboda","team":"Brighton & Hove Albion","pos":"Defender","min":1226.4,"ps":20.899,"dfn":10.6499,"att":1.2084,"poss":9.0407},{"name":"Morgan Rogers","team":"Chelsea","pos":"Midfielder","min":2996.3,"ps":11.319,"dfn":-1.0344,"att":10.6014,"poss":1.7523},{"name":"Moisés Caicedo","team":"Chelsea","pos":"Midfielder","min":2970.3,"ps":14.917,"dfn":3.7853,"att":0.5344,"poss":10.597},{"name":"Maxence Lacroix","team":"Chelsea","pos":"Defender","min":2967.6,"ps":21.482,"dfn":12.0682,"att":1.1002,"poss":8.3137},{"name":"Enzo Fernández","team":"Chelsea","pos":"Midfielder","min":2941.4,"ps":19.72,"dfn":1.1034,"att":11.1425,"poss":7.4743},{"name":"Marco Palestra","team":"Chelsea","pos":"Midfielder","min":2878.3,"ps":8.065,"dfn":0.9756,"att":2.2171,"poss":4.8719},{"name":"Cole Palmer","team":"Chelsea","pos":"Midfielder","min":2410.6,"ps":24.426,"dfn":1.0383,"att":18.9817,"poss":4.4057},{"name":"Pedro Neto","team":"Chelsea","pos":"Midfielder","min":2378.9,"ps":14.24,"dfn":-0.3035,"att":10.565,"poss":3.9786},{"name":"João Pedro","team":"Chelsea","pos":"Forward","min":2377.9,"ps":14.683,"dfn":0.7277,"att":12.7815,"poss":1.1737},{"name":"Pep Chavarría","team":"Chelsea","pos":"Defender","min":2215.7,"ps":11.705,"dfn":4.988,"att":0.9499,"poss":5.7668},{"name":"Danny Welbeck","team":"Chelsea","pos":"Forward","min":2145.6,"ps":16.19,"dfn":0.5893,"att":12.8612,"poss":2.7399},{"name":"Malo Gusto","team":"Chelsea","pos":"Defender","min":2083,"ps":15.496,"dfn":5.1927,"att":2.623,"poss":7.6807},{"name":"Emmanuel Emegha","team":"Chelsea","pos":"Forward","min":1993.9,"ps":12.676,"dfn":-1.1235,"att":12.0262,"poss":1.7736},{"name":"Reece James","team":"Chelsea","pos":"Defender","min":1664.7,"ps":19.478,"dfn":6.7097,"att":3.8087,"poss":8.9594},{"name":"Valentín Barco","team":"Chelsea","pos":"Midfielder","min":1640.6,"ps":15.93,"dfn":2.6462,"att":5.1052,"poss":8.1788},{"name":"Liam Delap","team":"Chelsea","pos":"Forward","min":1620.8,"ps":7.049,"dfn":-3.3774,"att":11.4562,"poss":-1.0302},{"name":"Jordan Henderson","team":"Chelsea","pos":"Midfielder","min":1556.7,"ps":13.284,"dfn":4.6815,"att":1.8102,"poss":6.7923},{"name":"Wesley Fofana","team":"Chelsea","pos":"Defender","min":1542.7,"ps":20.669,"dfn":11.0475,"att":-1.5633,"poss":11.1849},{"name":"Jorrel Hato","team":"Chelsea","pos":"Defender","min":1485.6,"ps":15.707,"dfn":5.9985,"att":0.5747,"poss":9.1338},{"name":"Tosin Adarabioyo","team":"Chelsea","pos":"Defender","min":1098.4,"ps":24.008,"dfn":12.1027,"att":-0.6869,"poss":12.5922},{"name":"Geovany Quenda","team":"Chelsea","pos":"Midfielder","min":1017.5,"ps":12.723,"dfn":2.1051,"att":7.7232,"poss":2.8948},{"name":"Estêvão","team":"Chelsea","pos":"Midfielder","min":852,"ps":16.503,"dfn":-1.7924,"att":16.2617,"poss":2.0338},{"name":"Josh Acheampong","team":"Chelsea","pos":"Defender","min":700,"ps":19.439,"dfn":8.4096,"att":0.5537,"poss":10.4758},{"name":"Matt Grimes","team":"Coventry City","pos":"Midfielder","min":2886.9,"ps":13.627,"dfn":3.8372,"att":2.1152,"poss":7.6743},{"name":"Milan van Ewijk","team":"Coventry City","pos":"Defender","min":2652.6,"ps":8.469,"dfn":4.5151,"att":1.5139,"poss":2.4403},{"name":"Bobby Thomas","team":"Coventry City","pos":"Defender","min":2233.8,"ps":14.775,"dfn":7.8539,"att":2.009,"poss":4.9123},{"name":"Liam Kitching","team":"Coventry City","pos":"Defender","min":2035.7,"ps":14.308,"dfn":7.1087,"att":1.9684,"poss":5.2308},{"name":"Jay DaSilva","team":"Coventry City","pos":"Defender","min":2031.8,"ps":8.939,"dfn":3.7071,"att":0.8265,"poss":4.4057},{"name":"Jack Rudoni","team":"Coventry City","pos":"Midfielder","min":1870.6,"ps":12.34,"dfn":1.8614,"att":8.0776,"poss":2.4007},{"name":"Ephron Mason-Clark","team":"Coventry City","pos":"Midfielder","min":1798.4,"ps":7.896,"dfn":-1.8436,"att":9.4837,"poss":0.2563},{"name":"Haji Wright","team":"Coventry City","pos":"Forward","min":1740.2,"ps":11.058,"dfn":-0.014,"att":11.743,"poss":-0.671},{"name":"Tatsuhiro Sakamoto","team":"Coventry City","pos":"Midfielder","min":1718.0,"ps":8.207,"dfn":1.2798,"att":6.0161,"poss":0.9107},{"name":"Aurèle Amenda","team":"Coventry City","pos":"Defender","min":1560.3,"ps":19.995,"dfn":11.4048,"att":-0.7326,"poss":9.3223},{"name":"Victor Torp","team":"Coventry City","pos":"Midfielder","min":1442.2,"ps":14.084,"dfn":2.2415,"att":9.0087,"poss":2.8339},{"name":"Josh Eccles","team":"Coventry City","pos":"Midfielder","min":1420.2,"ps":10.996,"dfn":2.3778,"att":5.3459,"poss":3.2721},{"name":"Ellis Simms","team":"Coventry City","pos":"Forward","min":1410.2,"ps":11.954,"dfn":1.0271,"att":12.3975,"poss":-1.4706},{"name":"Brandon Thomas-Asante","team":"Coventry City","pos":"Forward","min":1332.8,"ps":9.554,"dfn":0.1659,"att":10.1489,"poss":-0.7612},{"name":"Joel Latibeaudiere","team":"Coventry City","pos":"Defender","min":1311.3,"ps":10.517,"dfn":5.2691,"att":-1.2135,"poss":6.4613},{"name":"Frank Onyeka","team":"Coventry City","pos":"Midfielder","min":1268.7,"ps":7.311,"dfn":1.9875,"att":1.9722,"poss":3.3511},{"name":"Loum Tchaouna","team":"Coventry City","pos":"Forward","min":1206.8,"ps":8.378,"dfn":0.0178,"att":7.6491,"poss":0.7111},{"name":"Kaine Kesler-Hayden","team":"Coventry City","pos":"Defender","min":1163.9,"ps":10.292,"dfn":5.274,"att":2.5629,"poss":2.4554},{"name":"Luke Woolfenden","team":"Coventry City","pos":"Defender","min":1136.5,"ps":14.477,"dfn":8.9303,"att":-1.0978,"poss":6.6444},{"name":"Tyrick Mitchell","team":"Crystal Palace","pos":"Midfielder","min":3203.4,"ps":9.711,"dfn":7.2692,"att":1.3012,"poss":1.1407},{"name":"Daniel Muñoz","team":"Crystal Palace","pos":"Midfielder","min":2653.3,"ps":14.016,"dfn":5.9324,"att":5.6167,"poss":2.467},{"name":"Chris Richards","team":"Crystal Palace","pos":"Defender","min":2464.4,"ps":18.22,"dfn":11.9855,"att":0.2939,"poss":5.9402},{"name":"Jørgen Strand Larsen","team":"Crystal Palace","pos":"Forward","min":2440.6,"ps":6.005,"dfn":-1.8602,"att":9.0872,"poss":-1.2218},{"name":"Jean-Philippe Mateta","team":"Crystal Palace","pos":"Forward","min":2357.3,"ps":13.956,"dfn":1.2725,"att":14.3674,"poss":-1.6841},{"name":"Adam Wharton","team":"Crystal Palace","pos":"Midfielder","min":2230.1,"ps":13.653,"dfn":4.0969,"att":5.2856,"poss":4.271},{"name":"Ismaïla Sarr","team":"Crystal Palace","pos":"Forward","min":2205.3,"ps":12.365,"dfn":1.8703,"att":10.8415,"poss":-0.3473},{"name":"Óscar Mingueza","team":"Crystal Palace","pos":"Midfielder","min":2121.5,"ps":13.371,"dfn":3.2061,"att":4.4078,"poss":5.757},{"name":"Yéremy Pino","team":"Crystal Palace","pos":"Forward","min":1989.7,"ps":11.097,"dfn":-0.24,"att":9.6143,"poss":1.7226},{"name":"Jefferson Lerma","team":"Crystal Palace","pos":"Midfielder","min":1985.9,"ps":14.671,"dfn":7.0768,"att":3.0377,"poss":4.5566},{"name":"Brennan Johnson","team":"Crystal Palace","pos":"Forward","min":1958.6,"ps":7.737,"dfn":0.7719,"att":7.6831,"poss":-0.7175},{"name":"Will Hughes","team":"Crystal Palace","pos":"Midfielder","min":1778.3,"ps":6.653,"dfn":1.0862,"att":1.479,"poss":4.088},{"name":"Daichi Kamada","team":"Crystal Palace","pos":"Midfielder","min":1752.8,"ps":11.045,"dfn":1.8855,"att":3.8023,"poss":5.3574},{"name":"Evann Guessand","team":"Crystal Palace","pos":"Forward","min":1393.5,"ps":10.36,"dfn":0.0625,"att":9.6179,"poss":0.6794},{"name":"Jaydee Canvot","team":"Crystal Palace","pos":"Defender","min":1230.7,"ps":18.095,"dfn":10.789,"att":-0.4728,"poss":7.7788},{"name":"Justin Devenny","team":"Crystal Palace","pos":"Midfielder","min":830,"ps":6.046,"dfn":0.548,"att":4.9465,"poss":0.551},{"name":"James Tarkowski","team":"Everton","pos":"Defender","min":3226.7,"ps":18.465,"dfn":12.1246,"att":1.2863,"poss":5.0538},{"name":"Vitaliy Mykolenko","team":"Everton","pos":"Defender","min":2925.6,"ps":10.812,"dfn":8.0671,"att":0.057,"poss":2.6884},{"name":"James Garner","team":"Everton","pos":"Midfielder","min":2837,"ps":17.237,"dfn":6.8936,"att":4.682,"poss":5.6616},{"name":"Christian Nørgaard","team":"Everton","pos":"Midfielder","min":2723.7,"ps":16.115,"dfn":6.7418,"att":4.0408,"poss":5.3321},{"name":"Kiernan Dewsbury-Hall","team":"Everton","pos":"Midfielder","min":2623.1,"ps":13.255,"dfn":1.8892,"att":8.1143,"poss":3.2517},{"name":"Jake O'Brien","team":"Everton","pos":"Defender","min":2541.7,"ps":12.024,"dfn":8.9228,"att":0.4059,"poss":2.6957},{"name":"Iliman Ndiaye","team":"Everton","pos":"Midfielder","min":2496.8,"ps":13.419,"dfn":1.5545,"att":8.7222,"poss":3.1426},{"name":"Hayden Hackney","team":"Everton","pos":"Midfielder","min":2295.7,"ps":14.156,"dfn":0.6249,"att":6.9868,"poss":6.5443},{"name":"Michael Keane","team":"Everton","pos":"Defender","min":2094.7,"ps":21.286,"dfn":13.5588,"att":1.8637,"poss":5.8635},{"name":"Thierno Barry","team":"Everton","pos":"Forward","min":1990.9,"ps":6.373,"dfn":-0.2631,"att":9.4044,"poss":-2.7681},{"name":"Jarrad Branthwaite","team":"Everton","pos":"Defender","min":1560.4,"ps":18.663,"dfn":12.8799,"att":0.0614,"poss":5.7214},{"name":"Tim Iroegbunam","team":"Everton","pos":"Midfielder","min":1505,"ps":7.634,"dfn":4.1829,"att":0.3576,"poss":3.0936},{"name":"Beto","team":"Everton","pos":"Forward","min":1501,"ps":11.734,"dfn":1.1627,"att":13.0803,"poss":-2.5091},{"name":"Dwight McNeil","team":"Everton","pos":"Midfielder","min":1485.9,"ps":14.206,"dfn":2.5967,"att":9.4341,"poss":2.1752},{"name":"Jack Grealish","team":"Everton","pos":"Midfielder","min":1288,"ps":12.181,"dfn":1.0016,"att":7.366,"poss":3.8134},{"name":"Merlin Röhl","team":"Everton","pos":"Midfielder","min":849.0,"ps":4.255,"dfn":-0.9705,"att":3.7793,"poss":1.4465},{"name":"Carlos Alcaraz","team":"Everton","pos":"Midfielder","min":749.2,"ps":16.827,"dfn":1.9552,"att":11.0862,"poss":3.7853},{"name":"Joachim Andersen","team":"Fulham","pos":"Defender","min":2896.9,"ps":21.939,"dfn":12.4332,"att":0.1389,"poss":9.3666},{"name":"Sander Berge","team":"Fulham","pos":"Midfielder","min":2730.4,"ps":13.531,"dfn":4.7632,"att":-0.0154,"poss":8.7837},{"name":"Calvin Bassey","team":"Fulham","pos":"Defender","min":2660.7,"ps":15.486,"dfn":7.3575,"att":-1.5266,"poss":9.6548},{"name":"Alex Iwobi","team":"Fulham","pos":"Midfielder","min":2580.9,"ps":18.553,"dfn":2.8895,"att":10.3452,"poss":5.318},{"name":"Antonee Robinson","team":"Fulham","pos":"Defender","min":2224.6,"ps":15.203,"dfn":9.7389,"att":1.2893,"poss":4.1748},{"name":"Emile Smith Rowe","team":"Fulham","pos":"Midfielder","min":1982.3,"ps":16.687,"dfn":2.8764,"att":6.417,"poss":7.3936},{"name":"Timothy Castagne","team":"Fulham","pos":"Defender","min":1917.6,"ps":14.554,"dfn":7.3001,"att":1.6446,"poss":5.6095},{"name":"Saša Lukić","team":"Fulham","pos":"Midfielder","min":1825.6,"ps":8.4,"dfn":-0.2553,"att":2.5038,"poss":6.1514},{"name":"Kenny Tete","team":"Fulham","pos":"Defender","min":1665.3,"ps":13.472,"dfn":7.2515,"att":0.804,"poss":5.4165},{"name":"Ryan Sessegnon","team":"Fulham","pos":"Defender","min":1416,"ps":10.729,"dfn":4.0141,"att":4.5629,"poss":2.1522},{"name":"Joshua King","team":"Fulham","pos":"Midfielder","min":1310,"ps":9.546,"dfn":0.4839,"att":7.3734,"poss":1.6889},{"name":"Jorge Cuenca","team":"Fulham","pos":"Defender","min":1129.6,"ps":19.198,"dfn":10.9228,"att":-0.272,"poss":8.5472},{"name":"Rodrigo Muniz","team":"Fulham","pos":"Forward","min":1075.6,"ps":10.503,"dfn":2.3649,"att":12.5978,"poss":-4.4594},{"name":"Oscar Bobb","team":"Fulham","pos":"Midfielder","min":1050,"ps":11.879,"dfn":2.0619,"att":6.0254,"poss":3.7919},{"name":"Kevin","team":"Fulham","pos":"Midfielder","min":1037,"ps":13.262,"dfn":0.2499,"att":11.7114,"poss":1.3009},{"name":"Samuel Chukwueze","team":"Fulham","pos":"Forward","min":1002.4,"ps":17.814,"dfn":2.5935,"att":12.9527,"poss":2.2674},{"name":"Gonzalo García","team":"Fulham","pos":"Forward","min":897.3,"ps":15.749,"dfn":1.9929,"att":11.4637,"poss":2.292},{"name":"Tom Cairney","team":"Fulham","pos":"Midfielder","min":855.1,"ps":20.393,"dfn":2.727,"att":4.9046,"poss":12.761},{"name":"Lewie Coyle","team":"Hull City","pos":"Defender","min":2460.7,"ps":6.415,"dfn":4.0672,"att":0.3368,"poss":2.0112},{"name":"Regan Slater","team":"Hull City","pos":"Midfielder","min":2267.8,"ps":7.438,"dfn":2.9651,"att":2.1298,"poss":2.3436},{"name":"Charlie Hughes","team":"Hull City","pos":"Defender","min":2186.5,"ps":13.742,"dfn":9.1155,"att":-0.0104,"poss":4.6373},{"name":"John Egan","team":"Hull City","pos":"Defender","min":1959.6,"ps":12.036,"dfn":8.7012,"att":0.292,"poss":3.0424},{"name":"Oli McBurnie","team":"Hull City","pos":"Forward","min":1950.3,"ps":9.158,"dfn":1.77,"att":8.9417,"poss":-1.554},{"name":"Joe Gelhardt","team":"Hull City","pos":"Midfielder","min":1763.5,"ps":9.923,"dfn":0.0188,"att":9.5822,"poss":0.3221},{"name":"Amir Hadžiahmetović","team":"Hull City","pos":"Midfielder","min":1521.8,"ps":6.033,"dfn":3.5362,"att":0.243,"poss":2.2536},{"name":"Ryan Giles","team":"Hull City","pos":"Defender","min":1468.9,"ps":7.63,"dfn":4.2222,"att":2.1461,"poss":1.2615},{"name":"Matt Crooks","team":"Hull City","pos":"Midfielder","min":1441.1,"ps":7.251,"dfn":1.044,"att":3.4546,"poss":2.7522},{"name":"Hidemasa Morita","team":"Hull City","pos":"Midfielder","min":1315.0,"ps":9.835,"dfn":2.3376,"att":2.6588,"poss":4.839},{"name":"Liam Millar","team":"Hull City","pos":"Midfielder","min":1217.3,"ps":9.825,"dfn":2.2101,"att":6.8143,"poss":0.8007},{"name":"Cody Drameh","team":"Hull City","pos":"Defender","min":1152.0,"ps":10.261,"dfn":6.6046,"att":0.6061,"poss":3.0507},{"name":"Semi Ajayi","team":"Hull City","pos":"Defender","min":1114.1,"ps":11.829,"dfn":8.2675,"att":-0.0072,"poss":3.569},{"name":"John Lundstram","team":"Hull City","pos":"Midfielder","min":1104.1,"ps":9.017,"dfn":4.5421,"att":0.8283,"poss":3.6468},{"name":"Darko Gyabi","team":"Hull City","pos":"Midfielder","min":944.7,"ps":5.385,"dfn":1.0484,"att":1.9212,"poss":2.4156},{"name":"Mohamed Belloumi","team":"Hull City","pos":"Midfielder","min":849.8,"ps":13.452,"dfn":2.3323,"att":12.0243,"poss":-0.9042},{"name":"Yu Hirakawa","team":"Hull City","pos":"Forward","min":797.1,"ps":7.022,"dfn":1.9978,"att":3.9069,"poss":1.1175},{"name":"Paddy McNair","team":"Hull City","pos":"Defender","min":665.0,"ps":9.053,"dfn":3.7801,"att":0.451,"poss":4.8221},{"name":"Dara O'Shea","team":"Ipswich Town","pos":"Defender","min":2977.9,"ps":16.163,"dfn":10.1301,"att":0.1293,"poss":5.9041},{"name":"Darnell Furlong","team":"Ipswich Town","pos":"Defender","min":2679.8,"ps":7.895,"dfn":4.6267,"att":0.8474,"poss":2.4212},{"name":"Abdul Fatawu Issahaku","team":"Ipswich Town","pos":"Midfielder","min":2502.2,"ps":8.926,"dfn":0.7105,"att":8.3946,"poss":-0.1789},{"name":"Leif Davis","team":"Ipswich Town","pos":"Defender","min":2446.0,"ps":9.735,"dfn":4.3509,"att":3.3438,"poss":2.0404},{"name":"Azor Matusiwa","team":"Ipswich Town","pos":"Midfielder","min":2369.4,"ps":10.671,"dfn":5.5014,"att":-0.3013,"poss":5.4708},{"name":"Anis Mehmeti","team":"Ipswich Town","pos":"Forward","min":2073.0,"ps":10.014,"dfn":-0.9046,"att":10.3422,"poss":0.5766},{"name":"Cédric Kipré","team":"Ipswich Town","pos":"Defender","min":2003.5,"ps":15.463,"dfn":8.2871,"att":0.2203,"poss":6.956},{"name":"Jacob Greaves","team":"Ipswich Town","pos":"Defender","min":1848.0,"ps":16.5,"dfn":9.5467,"att":0.4763,"poss":6.4767},{"name":"Florentino Luís","team":"Ipswich Town","pos":"Midfielder","min":1826.3,"ps":11.848,"dfn":5.7112,"att":-0.1494,"poss":6.286},{"name":"Jack Clarke","team":"Ipswich Town","pos":"Midfielder","min":1656.9,"ps":10.98,"dfn":0.3078,"att":9.374,"poss":1.2981},{"name":"Marcelino Núñez","team":"Ipswich Town","pos":"Midfielder","min":1588.2,"ps":12.282,"dfn":0.1389,"att":8.4678,"poss":3.675},{"name":"Emersonn","team":"Ipswich Town","pos":"Forward","min":1345.2,"ps":11.831,"dfn":-1.281,"att":13.1828,"poss":-0.0711},{"name":"Jaden Philogene-Bidace","team":"Ipswich Town","pos":"Midfielder","min":1322.4,"ps":13.462,"dfn":0.6156,"att":11.3117,"poss":1.5347},{"name":"George Hirst","team":"Ipswich Town","pos":"Forward","min":1225.0,"ps":8.901,"dfn":-0.1524,"att":10.7956,"poss":-1.7422},{"name":"Jack Taylor","team":"Ipswich Town","pos":"Midfielder","min":1206.1,"ps":11.03,"dfn":2.1474,"att":4.2083,"poss":4.6743},{"name":"Issa Diop","team":"Ipswich Town","pos":"Defender","min":1064,"ps":14.774,"dfn":8.0151,"att":-1.1133,"poss":7.8721},{"name":"Sindre Walle Egeli","team":"Ipswich Town","pos":"Midfielder","min":1054.6,"ps":7.925,"dfn":-0.5248,"att":8.1975,"poss":0.2527},{"name":"Kasey McAteer","team":"Ipswich Town","pos":"Midfielder","min":888.6,"ps":8.927,"dfn":-0.1001,"att":8.2217,"poss":0.8058},{"name":"Ben Johnson","team":"Ipswich Town","pos":"Defender","min":864.4,"ps":8.24,"dfn":4.5441,"att":1.8218,"poss":1.8741},{"name":"Wes Burns","team":"Ipswich Town","pos":"Midfielder","min":831.5,"ps":6.558,"dfn":0.9022,"att":5.4437,"poss":0.2122},{"name":"Chuba Akpom","team":"Ipswich Town","pos":"Forward","min":802.2,"ps":10.997,"dfn":0.3365,"att":10.0224,"poss":0.6381},{"name":"Joe Rodon","team":"Leeds United","pos":"Defender","min":2898.7,"ps":16.698,"dfn":8.7379,"att":-0.1999,"poss":8.1601},{"name":"Jayden Bogle","team":"Leeds United","pos":"Defender","min":2778.3,"ps":8.503,"dfn":4.2355,"att":2.5196,"poss":1.7482},{"name":"Ethan Ampadu","team":"Leeds United","pos":"Midfielder","min":2665.7,"ps":14.387,"dfn":6.2838,"att":0.6482,"poss":7.4545},{"name":"Tarik Muharemović","team":"Leeds United","pos":"Defender","min":2645.9,"ps":20.156,"dfn":12.1776,"att":0.1737,"poss":7.8046},{"name":"Anton Stach","team":"Leeds United","pos":"Midfielder","min":2375.2,"ps":17.141,"dfn":6.5475,"att":7.1002,"poss":3.4933},{"name":"Dominic Calvert-Lewin","team":"Leeds United","pos":"Forward","min":2335.3,"ps":10.682,"dfn":0.6116,"att":13.0965,"poss":-3.026},{"name":"Brenden Aaronson","team":"Leeds United","pos":"Midfielder","min":2302.8,"ps":10.62,"dfn":0.9072,"att":7.9063,"poss":1.8068},{"name":"James Justin","team":"Leeds United","pos":"Defender","min":2197.6,"ps":13.59,"dfn":8.8398,"att":1.3525,"poss":3.3981},{"name":"Jaka Bijol","team":"Leeds United","pos":"Defender","min":2161.2,"ps":18.781,"dfn":10.8979,"att":1.0088,"poss":6.874},{"name":"Gabriel Gudmundsson","team":"Leeds United","pos":"Defender","min":2134.9,"ps":7.595,"dfn":3.8152,"att":1.3275,"poss":2.4524},{"name":"Harry Wilson","team":"Leeds United","pos":"Midfielder","min":2101.7,"ps":16.801,"dfn":1.9545,"att":12.726,"poss":2.1201},{"name":"Ao Tanaka","team":"Leeds United","pos":"Midfielder","min":1669.1,"ps":14.7,"dfn":4.1916,"att":3.4395,"poss":7.0685},{"name":"Noah Okafor","team":"Leeds United","pos":"Forward","min":1422.8,"ps":12.518,"dfn":0.7572,"att":11.6682,"poss":0.0929},{"name":"Ilia Gruev","team":"Leeds United","pos":"Midfielder","min":1286.6,"ps":10.784,"dfn":2.462,"att":1.0345,"poss":7.2874},{"name":"Sean Longstaff","team":"Leeds United","pos":"Midfielder","min":1230.1,"ps":12.736,"dfn":3.2779,"att":4.9059,"poss":4.5522},{"name":"Lukas Nmecha","team":"Leeds United","pos":"Forward","min":1092,"ps":14.567,"dfn":-0.3545,"att":16.1884,"poss":-1.267},{"name":"Virgil van Dijk","team":"Liverpool FC","pos":"Defender","min":3359.7,"ps":27.187,"dfn":13.3428,"att":1.5745,"poss":12.2693},{"name":"Dominik Szoboszlai","team":"Liverpool FC","pos":"Midfielder","min":2863.9,"ps":20.71,"dfn":2.0574,"att":10.949,"poss":7.7041},{"name":"Ryan Gravenberch","team":"Liverpool FC","pos":"Midfielder","min":2779.7,"ps":15.991,"dfn":4.7931,"att":3.0601,"poss":8.1383},{"name":"Alexis Mac Allister","team":"Liverpool FC","pos":"Midfielder","min":2646.1,"ps":14.381,"dfn":1.5928,"att":5.7084,"poss":7.0801},{"name":"Miloš Kerkez","team":"Liverpool FC","pos":"Defender","min":2553,"ps":9.909,"dfn":5.22,"att":0.1116,"poss":4.5773},{"name":"Víctor Muñoz","team":"Liverpool FC","pos":"Forward","min":2423.0,"ps":13.92,"dfn":-0.7123,"att":12.2896,"poss":2.3428},{"name":"Cody Gakpo","team":"Liverpool FC","pos":"Midfielder","min":2365.3,"ps":15.938,"dfn":0.6613,"att":13.5524,"poss":1.7244},{"name":"Florian Wirtz","team":"Liverpool FC","pos":"Midfielder","min":2302.1,"ps":21.087,"dfn":-0.0051,"att":14.9805,"poss":6.1119},{"name":"Hugo Ekitiké","team":"Liverpool FC","pos":"Forward","min":1812.1,"ps":18.81,"dfn":-1.1241,"att":18.8514,"poss":1.083},{"name":"Curtis Jones","team":"Liverpool FC","pos":"Midfielder","min":1776.7,"ps":19.529,"dfn":3.2488,"att":4.9993,"poss":11.2807},{"name":"Jeremie Frimpong","team":"Liverpool FC","pos":"Defender","min":1525.0,"ps":11.236,"dfn":1.3224,"att":6.9087,"poss":3.0046},{"name":"Alexander Isak","team":"Liverpool FC","pos":"Forward","min":1522.7,"ps":17.866,"dfn":-0.5839,"att":17.7719,"poss":0.6782},{"name":"Jérémy Jacquet","team":"Liverpool FC","pos":"Defender","min":1274.5,"ps":18.855,"dfn":9.2237,"att":0.4828,"poss":9.1483},{"name":"Joe Gomez","team":"Liverpool FC","pos":"Defender","min":873.8,"ps":12.002,"dfn":4.6345,"att":1.8234,"poss":5.544},{"name":"Conor Bradley","team":"Liverpool FC","pos":"Defender","min":857,"ps":11.466,"dfn":4.1505,"att":1.5724,"poss":5.7436},{"name":"Antoine Semenyo","team":"Manchester City","pos":"Midfielder","min":3048.1,"ps":16.809,"dfn":-0.2515,"att":14.9866,"poss":2.0739},{"name":"Marc Guéhi","team":"Manchester City","pos":"Defender","min":2963.1,"ps":21.424,"dfn":10.2056,"att":1.2987,"poss":9.9197},{"name":"Erling Haaland","team":"Manchester City","pos":"Forward","min":2838.6,"ps":24.175,"dfn":2.1692,"att":23.2721,"poss":-1.2667},{"name":"Elliot Anderson","team":"Manchester City","pos":"Midfielder","min":2834.6,"ps":17.061,"dfn":5.1417,"att":3.8886,"poss":8.0307},{"name":"Nico O'Reilly","team":"Manchester City","pos":"Defender","min":2648,"ps":16.301,"dfn":3.9333,"att":6.3031,"poss":6.0644},{"name":"Rúben Dias","team":"Manchester City","pos":"Defender","min":2242.7,"ps":22.728,"dfn":8.344,"att":0.1993,"poss":14.1843},{"name":"Matheus Nunes","team":"Manchester City","pos":"Defender","min":2237.9,"ps":16.392,"dfn":6.4742,"att":0.4286,"poss":9.4895},{"name":"Tijjani Reijnders","team":"Manchester City","pos":"Midfielder","min":2149.6,"ps":19.181,"dfn":1.2248,"att":10.3867,"poss":7.5697},{"name":"Phil Foden","team":"Manchester City","pos":"Midfielder","min":2124.4,"ps":22.571,"dfn":1.2883,"att":14.4886,"poss":6.7939},{"name":"Joško Gvardiol","team":"Manchester City","pos":"Defender","min":2054.6,"ps":21.958,"dfn":7.5117,"att":3.6726,"poss":10.7741},{"name":"Rodri","team":"Manchester City","pos":"Midfielder","min":1798,"ps":27.115,"dfn":7.5534,"att":4.15,"poss":15.4112},{"name":"Rayan Aït-Nouri","team":"Manchester City","pos":"Defender","min":1786.3,"ps":16.241,"dfn":4.494,"att":4.6176,"poss":7.1296},{"name":"Rayan Cherki","team":"Manchester City","pos":"Midfielder","min":1769.1,"ps":23.48,"dfn":-0.2023,"att":16.763,"poss":6.9192},{"name":"Jérémy Doku","team":"Manchester City","pos":"Midfielder","min":1685.9,"ps":16.883,"dfn":-0.5953,"att":13.8244,"poss":3.6535},{"name":"Nico González","team":"Manchester City","pos":"Midfielder","min":1621.2,"ps":16.599,"dfn":3.5315,"att":2.1346,"poss":10.933},{"name":"Omar Marmoush","team":"Manchester City","pos":"Forward","min":1450.6,"ps":20.804,"dfn":-0.5857,"att":19.2607,"poss":2.1286},{"name":"Savinho","team":"Manchester City","pos":"Midfielder","min":1376.9,"ps":18.433,"dfn":-0.0342,"att":14.4586,"poss":4.0086},{"name":"Abdukodir Khusanov","team":"Manchester City","pos":"Defender","min":1170.1,"ps":20.302,"dfn":9.5416,"att":-0.0336,"poss":10.7943},{"name":"Bruno Fernandes","team":"Manchester United","pos":"Midfielder","min":3061.6,"ps":24.782,"dfn":3.3879,"att":15.85,"poss":5.5443},{"name":"Luke Shaw","team":"Manchester United","pos":"Defender","min":2777.2,"ps":12.136,"dfn":5.5364,"att":-0.3918,"poss":6.9913},{"name":"Bryan Mbeumo","team":"Manchester United","pos":"Forward","min":2753.3,"ps":17.229,"dfn":0.3707,"att":15.5779,"poss":1.28},{"name":"Diogo Dalot","team":"Manchester United","pos":"Defender","min":2752,"ps":15.118,"dfn":7.2099,"att":2.6453,"poss":5.2623},{"name":"Matheus Cunha","team":"Manchester United","pos":"Forward","min":2523.6,"ps":20.623,"dfn":0.8691,"att":16.9994,"poss":2.7544},{"name":"Amad Diallo","team":"Manchester United","pos":"Midfielder","min":2198.7,"ps":19.568,"dfn":2.2696,"att":12.2756,"poss":5.0227},{"name":"Youri Tielemans","team":"Manchester United","pos":"Midfielder","min":2164.9,"ps":16.36,"dfn":3.5362,"att":4.9213,"poss":7.9025},{"name":"Patrick Dorgu","team":"Manchester United","pos":"Midfielder","min":1776.6,"ps":12.583,"dfn":4.3335,"att":5.2726,"poss":2.9767},{"name":"Benjamin Šeško","team":"Manchester United","pos":"Forward","min":1774.2,"ps":18.598,"dfn":2.0161,"att":17.0148,"poss":-0.4328},{"name":"Kobbie Mainoo","team":"Manchester United","pos":"Midfielder","min":1704.4,"ps":13.028,"dfn":3.9422,"att":1.5212,"poss":7.5651},{"name":"Harry Maguire","team":"Manchester United","pos":"Defender","min":1694.7,"ps":20.074,"dfn":11.1774,"att":1.1997,"poss":7.6967},{"name":"Leny Yoro","team":"Manchester United","pos":"Defender","min":1675.4,"ps":18.493,"dfn":9.1913,"att":0.0182,"poss":9.2837},{"name":"Andrey Santos","team":"Manchester United","pos":"Midfielder","min":1567.6,"ps":17.089,"dfn":5.8621,"att":2.5295,"poss":8.6974},{"name":"Noussair Mazraoui","team":"Manchester United","pos":"Defender","min":1556.1,"ps":15.365,"dfn":8.2055,"att":-0.1208,"poss":7.2808},{"name":"Matthijs de Ligt","team":"Manchester United","pos":"Defender","min":1461.5,"ps":21.9,"dfn":10.4674,"att":2.1817,"poss":9.2506},{"name":"Lisandro Martínez","team":"Manchester United","pos":"Defender","min":1301.7,"ps":19.444,"dfn":8.0396,"att":0.3722,"poss":11.0323},{"name":"Manuel Ugarte","team":"Manchester United","pos":"Midfielder","min":1274.5,"ps":11.664,"dfn":3.7023,"att":0.4583,"poss":7.5033},{"name":"Joshua Zirkzee","team":"Manchester United","pos":"Forward","min":1151.7,"ps":14.801,"dfn":1.2786,"att":12.1487,"poss":1.374},{"name":"Ayden Heaven","team":"Manchester United","pos":"Defender","min":938,"ps":16.92,"dfn":9.8679,"att":-1.6876,"poss":8.7398},{"name":"Mason Mount","team":"Manchester United","pos":"Forward","min":887,"ps":13.535,"dfn":0.4736,"att":9.1398,"poss":3.9216},{"name":"Dan Burn","team":"Newcastle United","pos":"Defender","min":2604,"ps":16.543,"dfn":10.0222,"att":0.1349,"poss":6.3862},{"name":"Malick Thiaw","team":"Newcastle United","pos":"Defender","min":2390.5,"ps":21.34,"dfn":9.866,"att":1.8147,"poss":9.6596},{"name":"Joelinton","team":"Newcastle United","pos":"Midfielder","min":1986,"ps":13.555,"dfn":2.9283,"att":5.8288,"poss":4.7982},{"name":"Lewis Hall","team":"Newcastle United","pos":"Defender","min":1985.6,"ps":16.494,"dfn":7.4771,"att":2.531,"poss":6.4858},{"name":"Fabian Schär","team":"Newcastle United","pos":"Defender","min":1898.9,"ps":19.804,"dfn":8.5689,"att":2.6907,"poss":8.5448},{"name":"Anthony Elanga","team":"Newcastle United","pos":"Forward","min":1828.6,"ps":10.925,"dfn":1.2409,"att":8.2399,"poss":1.4439},{"name":"Jacob Murphy","team":"Newcastle United","pos":"Forward","min":1780.9,"ps":13.821,"dfn":1.6877,"att":11.4025,"poss":0.7304},{"name":"Tino Livramento","team":"Newcastle United","pos":"Defender","min":1758.1,"ps":13.059,"dfn":7.2256,"att":-0.5472,"poss":6.3807},{"name":"Sven Botman","team":"Newcastle United","pos":"Defender","min":1747.4,"ps":23.427,"dfn":13.321,"att":0.666,"poss":9.4401},{"name":"Harvey Barnes","team":"Newcastle United","pos":"Forward","min":1738.6,"ps":17.265,"dfn":0.0577,"att":14.8921,"poss":2.3156},{"name":"Nick Woltemade","team":"Newcastle United","pos":"Forward","min":1699.7,"ps":11.219,"dfn":0.655,"att":10.1828,"poss":0.3808},{"name":"Bazoumana Touré","team":"Newcastle United","pos":"Midfielder","min":1626.1,"ps":10.517,"dfn":-0.4782,"att":10.3086,"poss":0.6867},{"name":"Lewis Miley","team":"Newcastle United","pos":"Midfielder","min":1436.2,"ps":20.317,"dfn":8.9127,"att":3.7176,"poss":7.6868},{"name":"Jacob Ramsey","team":"Newcastle United","pos":"Midfielder","min":1424.6,"ps":12.79,"dfn":2.5985,"att":4.1979,"poss":5.994},{"name":"Joe Willock","team":"Newcastle United","pos":"Midfielder","min":1039.7,"ps":9.381,"dfn":-0.1868,"att":5.9764,"poss":3.5918},{"name":"William Osula","team":"Newcastle United","pos":"Forward","min":851,"ps":6.67,"dfn":-5.8636,"att":13.205,"poss":-0.6718},{"name":"Sean Steur","team":"Newcastle United","pos":"Midfielder","min":807.2,"ps":13.507,"dfn":2.3206,"att":4.8657,"poss":6.3212},{"name":"Aladji Bamba","team":"Newcastle United","pos":"Midfielder","min":742.3,"ps":8.885,"dfn":1.1076,"att":1.3731,"poss":6.4041},{"name":"Nikola Milenković","team":"Nottingham Forest","pos":"Defender","min":3216.8,"ps":16.874,"dfn":10.8992,"att":-0.1856,"poss":6.1607},{"name":"Morgan Gibbs-White","team":"Nottingham Forest","pos":"Midfielder","min":3034.9,"ps":15.261,"dfn":1.2519,"att":10.8693,"poss":3.1403},{"name":"Neco Williams","team":"Nottingham Forest","pos":"Defender","min":2812.4,"ps":15.328,"dfn":7.7452,"att":4.474,"poss":3.1092},{"name":"Murillo","team":"Nottingham Forest","pos":"Defender","min":2529.6,"ps":16.824,"dfn":10.5828,"att":0.7116,"poss":5.5296},{"name":"Igor Jesus","team":"Nottingham Forest","pos":"Forward","min":2320,"ps":10.033,"dfn":-0.3192,"att":10.2129,"poss":0.1396},{"name":"Ola Aina","team":"Nottingham Forest","pos":"Defender","min":2012.1,"ps":11.633,"dfn":7.9173,"att":0.1664,"poss":3.5494},{"name":"Callum Hudson Odoi","team":"Nottingham Forest","pos":"Midfielder","min":1956.4,"ps":14.032,"dfn":0.9884,"att":8.832,"poss":4.2114},{"name":"Omari Hutchinson","team":"Nottingham Forest","pos":"Midfielder","min":1928.1,"ps":10.321,"dfn":-1.2991,"att":8.9676,"poss":2.6521},{"name":"Ibrahim Sangaré","team":"Nottingham Forest","pos":"Midfielder","min":1872.6,"ps":11.282,"dfn":3.374,"att":1.7933,"poss":6.1147},{"name":"Xaver Schlager","team":"Nottingham Forest","pos":"Midfielder","min":1820.5,"ps":13.526,"dfn":3.5729,"att":3.603,"poss":6.3499},{"name":"Chris Wood","team":"Nottingham Forest","pos":"Forward","min":1630.7,"ps":12.249,"dfn":1.1259,"att":12.0718,"poss":-0.9486},{"name":"Dan Ndoye","team":"Nottingham Forest","pos":"Midfielder","min":1482.2,"ps":8.639,"dfn":0.4658,"att":6.5768,"poss":1.596},{"name":"Nicolás Domínguez","team":"Nottingham Forest","pos":"Midfielder","min":1461.4,"ps":15.379,"dfn":5.0241,"att":4.0542,"poss":6.301},{"name":"Nicolò Savona","team":"Nottingham Forest","pos":"Defender","min":1221.0,"ps":9.425,"dfn":3.1683,"att":1.1252,"poss":5.1312},{"name":"Morato","team":"Nottingham Forest","pos":"Defender","min":1210.9,"ps":14.385,"dfn":8.9031,"att":-0.5533,"poss":6.0351},{"name":"Ryan Yates","team":"Nottingham Forest","pos":"Midfielder","min":1196,"ps":10.163,"dfn":3.619,"att":2.6628,"poss":3.8815},{"name":"Trai Hume","team":"Sunderland","pos":"Defender","min":2915.8,"ps":10.19,"dfn":5.5814,"att":2.109,"poss":2.5},{"name":"Granit Xhaka","team":"Sunderland","pos":"Midfielder","min":2797.8,"ps":16.624,"dfn":5.9413,"att":1.9571,"poss":8.726},{"name":"Omar Alderete","team":"Sunderland","pos":"Defender","min":2658.5,"ps":16.621,"dfn":10.8402,"att":2.2145,"poss":3.5662},{"name":"Noah Sadiki","team":"Sunderland","pos":"Midfielder","min":2507.3,"ps":8.39,"dfn":2.949,"att":0.9364,"poss":4.5043},{"name":"Enzo Le Fée","team":"Sunderland","pos":"Midfielder","min":2079.8,"ps":12.725,"dfn":3.1771,"att":5.9398,"poss":3.6082},{"name":"Nordi Mukiele","team":"Sunderland","pos":"Defender","min":1934.2,"ps":14.925,"dfn":9.9197,"att":1.8314,"poss":3.1738},{"name":"Daniel Ballard","team":"Sunderland","pos":"Defender","min":1844.9,"ps":18.504,"dfn":10.3293,"att":1.8937,"poss":6.2808},{"name":"Thomas Meunier","team":"Sunderland","pos":"Defender","min":1723.5,"ps":13.566,"dfn":4.6218,"att":4.1094,"poss":4.8348},{"name":"Habib Diarra","team":"Sunderland","pos":"Midfielder","min":1701.3,"ps":9.247,"dfn":0.2322,"att":5.4324,"poss":3.5825},{"name":"Lutsharel Geertruida","team":"Sunderland","pos":"Defender","min":1695.0,"ps":13.638,"dfn":5.7517,"att":1.6351,"poss":6.2516},{"name":"Brian Brobbey","team":"Sunderland","pos":"Forward","min":1671.7,"ps":7.265,"dfn":-0.9499,"att":8.8529,"poss":-0.6379},{"name":"Wilson Isidor","team":"Sunderland","pos":"Forward","min":1516.4,"ps":10.97,"dfn":-0.2696,"att":13.0889,"poss":-1.8493},{"name":"Simon Adingra","team":"Sunderland","pos":"Midfielder","min":1471.2,"ps":10.95,"dfn":0.474,"att":9.7025,"poss":0.7736},{"name":"Reinildo Mandava","team":"Sunderland","pos":"Defender","min":1466.1,"ps":9.182,"dfn":5.9385,"att":-1.8904,"poss":5.1343},{"name":"Chemsdine Talbi","team":"Sunderland","pos":"Midfielder","min":1337.9,"ps":11.33,"dfn":0.9774,"att":8.304,"poss":2.0491},{"name":"Nilson Angulo","team":"Sunderland","pos":"Midfielder","min":1216.6,"ps":10.526,"dfn":1.5598,"att":7.4062,"poss":1.5597},{"name":"Chris Rigg","team":"Sunderland","pos":"Midfielder","min":1144.9,"ps":7.401,"dfn":1.2453,"att":4.8615,"poss":1.2937},{"name":"Jan Paul van Hecke","team":"Tottenham Hotspur","pos":"Defender","min":3018.9,"ps":21.226,"dfn":10.0384,"att":0.311,"poss":10.8767},{"name":"Mateus Fernandes","team":"Tottenham Hotspur","pos":"Midfielder","min":2807.2,"ps":12.97,"dfn":3.1173,"att":3.2803,"poss":6.5721},{"name":"Pedro Porro","team":"Tottenham Hotspur","pos":"Defender","min":2789.7,"ps":13.982,"dfn":6.0196,"att":4.8179,"poss":3.1444},{"name":"Sandro Tonali","team":"Tottenham Hotspur","pos":"Midfielder","min":2572.3,"ps":14.324,"dfn":3.8844,"att":3.8174,"poss":6.6217},{"name":"Marcos Senesi","team":"Tottenham Hotspur","pos":"Defender","min":2523.7,"ps":17.836,"dfn":10.9326,"att":0.8756,"poss":6.0281},{"name":"Micky van de Ven","team":"Tottenham Hotspur","pos":"Defender","min":2364.3,"ps":16.344,"dfn":6.3609,"att":-0.1833,"poss":10.1668},{"name":"Mohammed Kudus","team":"Tottenham Hotspur","pos":"Midfielder","min":1980.7,"ps":12.337,"dfn":-0.9274,"att":9.9292,"poss":3.3348},{"name":"Xavi Simons","team":"Tottenham Hotspur","pos":"Midfielder","min":1935.1,"ps":16.798,"dfn":1.1364,"att":11.4038,"poss":4.2573},{"name":"Conor Gallagher","team":"Tottenham Hotspur","pos":"Midfielder","min":1901.2,"ps":10.425,"dfn":0.3704,"att":3.6941,"poss":6.3605},{"name":"Cristian Romero","team":"Tottenham Hotspur","pos":"Defender","min":1874.3,"ps":22.956,"dfn":10.2108,"att":2.3338,"poss":10.4117},{"name":"Richarlison","team":"Tottenham Hotspur","pos":"Forward","min":1867.6,"ps":15.461,"dfn":2.6378,"att":14.7664,"poss":-1.9433},{"name":"Djed Spence","team":"Tottenham Hotspur","pos":"Defender","min":1817.4,"ps":11.666,"dfn":4.9558,"att":2.0522,"poss":4.6578},{"name":"Archie Gray","team":"Tottenham Hotspur","pos":"Midfielder","min":1726.0,"ps":10.829,"dfn":4.1994,"att":0.9809,"poss":5.6489},{"name":"Kevin Danso","team":"Tottenham Hotspur","pos":"Defender","min":1717.2,"ps":19.591,"dfn":11.4088,"att":-0.3331,"poss":8.5156},{"name":"Rodrigo Bentancur","team":"Tottenham Hotspur","pos":"Midfielder","min":1701.3,"ps":16.515,"dfn":6.8682,"att":1.9002,"poss":7.7464},{"name":"Dominic Solanke","team":"Tottenham Hotspur","pos":"Forward","min":1677.6,"ps":12.024,"dfn":0.1168,"att":12.078,"poss":-0.1708},{"name":"Destiny Udogie","team":"Tottenham Hotspur","pos":"Defender","min":1662,"ps":8.487,"dfn":3.6292,"att":-0.8179,"poss":5.6753},{"name":"Pape Matar Sarr","team":"Tottenham Hotspur","pos":"Midfielder","min":1644.7,"ps":15.429,"dfn":3.7824,"att":5.1058,"poss":6.5405},{"name":"Andy Robertson","team":"Tottenham Hotspur","pos":"Defender","min":1632.4,"ps":14.624,"dfn":5.0858,"att":3.3654,"poss":6.1727},{"name":"Mathys Tel","team":"Tottenham Hotspur","pos":"Forward","min":1180.4,"ps":12.6,"dfn":-0.2772,"att":12.0794,"poss":0.7974},{"name":"Wilson Odobert","team":"Tottenham Hotspur","pos":"Forward","min":1110.9,"ps":14.993,"dfn":2.4586,"att":9.5393,"poss":2.9952},{"name":"Lucas Bergvall","team":"Tottenham Hotspur","pos":"Midfielder","min":1059,"ps":8.849,"dfn":0.2922,"att":3.611,"poss":4.9456}],"excluded":["Akin Famewo","Anthony Gordon","Bernardo Silva","Bertrand Traoré","Brajan Gruda","Casemiro","Crysencio Summerville","Dan Neil","Donyell Malen","Douglas Luiz","Eliezer Mayenda","Ibrahima Konaté","Idrissa Gana Gueye","Ivan Azón","Jadon Sancho","James Milner","Jens-Lys Cajuste","Jhon Arias","João Palhinha","Joël Veltman","Kieran Trippier","Kyle Joseph","Leandro Trossard","Lewis Koumas","Lucas Digne","Marc Cucurella","Matt Doherty","Mohamed Salah","Nathan Aké","Randal Kolo Muani","Raúl Jiménez","Romain Esse","Trevoh Chalobah","Yang Min-hyeok","Yves Bissouma","Álex Jiménez"],"generated":"2026-08-05"}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const K = DATA.consts, TEAMS = DATA.teams, PLAYERS = DATA.players;
+const POSCLR = {Defender:'var(--pos-def)', Midfielder:'var(--pos-mid)', Forward:'var(--pos-fwd)'};
+const POSAB = {Defender:'DEF', Midfielder:'MID', Forward:'FWD'};
+const fmt=(x,d=2)=>x.toLocaleString('en',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=(x,d=2)=>(x>=0?'+':'')+fmt(x,d);
+
+function percentile(vals,q){
+  const v=[...vals].sort((a,b)=>a-b), n=v.length;
+  if(!n) return 0;
+  const i=q*(n-1), lo=Math.floor(i), fr=i-lo;
+  return lo+1>=n ? v[lo] : v[lo]*(1-fr)+v[lo+1]*fr;
+}
+function benchmarks(q){
+  const b={};
+  for(const pos of ['Defender','Midfielder','Forward']){
+    const g=PLAYERS.filter(p=>p.pos===pos);
+    b[pos]={dfn:percentile(g.map(p=>p.dfn),q),att:percentile(g.map(p=>p.att),q),poss:percentile(g.map(p=>p.poss),q)};
+  }
+  return b;
+}
+function gfga(AC,AD,AE,P,Q){
+  const N=AD+K.AE2*0.5*AE, O=AC+K.AE2*0.5*AE;
+  const L=N/K.N24*K.I34 + P/K.P24*K.I35;
+  const M=K.O24/O*K.I34 + Q/K.Q24*K.I35;
+  const Yr=L*K.I30/20, Zr=M*K.I30/20;
+  return [ (Yr-K.Y24)/K.Y25*K.I31 + K.I30/20, (Zr-K.Z24)/K.Z25*K.I31 + K.I30/20 ];
+}
+function computeAll(q){
+  const b=benchmarks(q);
+  return PLAYERS.map(p=>{
+    const tm=TEAMS[p.team], d=tm.den, rb=b[p.pos];
+    const AC2=tm.AC+(rb.dfn-p.dfn)*p.min/d;
+    const AD2=tm.AD+(rb.att-p.att)*p.min/d;
+    const AE2=tm.AE+(rb.poss-p.poss)*p.min/d;
+    const [GF2,GA2]=gfga(AC2,AD2,AE2,tm.P,tm.Q);
+    const impact=K.cGF*(tm.GF-GF2)-K.cGA*(tm.GA-GA2);
+    return {...p, K:tm.K, ptsRepl:tm.K-impact, impact, impact90:impact*90/p.min,
+            gfAdded:tm.GF-GF2, gaSaved:GA2-tm.GA};
+  });
+}
+
+// ---- state ----
+let ST={q:0.20, pos:'All', team:'All', search:'', sort:'impact', dir:-1, sel:null};
+let ROWS=[];
+
+function filtered(){
+  return ROWS.filter(r=>
+    (ST.pos==='All'||r.pos===ST.pos) &&
+    (ST.team==='All'||r.team===ST.team) &&
+    (!ST.search||r.name.toLowerCase().includes(ST.search)));
+}
+function sorted(list){
+  const k=ST.sort, d=ST.dir;
+  return [...list].sort((a,b)=>{
+    let x=a[k],y=b[k];
+    if(k==='name'||k==='team'||k==='pos'){x=String(x);y=String(y);return d*x.localeCompare(y);}
+    return d*(x-y);
+  });
+}
+
+function recompute(){
+  ROWS=computeAll(ST.q).sort((a,b)=>b.impact-a.impact);
+  ROWS.forEach((r,i)=>r.rank=i+1);
+  if(!ST.sel || !ROWS.find(r=>r.name===ST.sel)) ST.sel=ROWS[0].name;
+  renderAll();
+}
+function renderAll(){ renderSpot(); renderChart(); renderTable();
+  document.getElementById('replval').textContent = ordinal(ST.q*100)+' pctile';
+  const f=filtered();
+  document.getElementById('chartsub').textContent='· '+labelScope();
+  document.getElementById('tablesub').textContent='· '+f.length+' shown';
+}
+function ordinal(n){n=Math.round(n);const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+function labelScope(){const parts=[];if(ST.pos!=='All')parts.push(POSAB[ST.pos]);if(ST.team!=='All')parts.push(ST.team);return parts.length?parts.join(' · '):'all positions & teams';}
+
+function renderSpot(){
+  const r=ROWS.find(x=>x.name===ST.sel)||ROWS[0];
+  const impCls=r.impact>=0?'pos-p':'neg-p';
+  const el=document.getElementById('spot');
+  el.innerHTML=`
+    <div class="who">
+      <div class="name">${r.name}</div>
+      <div class="meta">
+        <span class="pill" style="background:${POSCLR[r.pos]}"><span class="dot" style="background:#fff"></span>${r.pos}</span>
+        <span>${r.team}</span>
+      </div>
+      <div class="sentence">Replacing <b>${r.name}</b> with a replacement-level ${r.pos.toLowerCase()} (${ordinal(ST.q*100)} pctile) moves <b>${r.team}</b> from <b>${fmt(r.K,1)}</b> to <b>${fmt(r.ptsRepl,1)}</b> projected points — a swing of <b class="${impCls}">${sgn(r.impact)}</b>.</div>
+      <div class="subtle"><span>Impact / 90: <b class="${impCls}">${sgn(r.impact90,3)}</b></span><span>Goals added: <b>${sgn(r.gfAdded,1)}</b></span><span>Goals saved: <b>${sgn(r.gaSaved,1)}</b></span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Team pts (full)</div><div class="v">${fmt(r.K,1)}</div></div>
+      <div class="stat"><div class="k">Pts w/ replacement</div><div class="v">${fmt(r.ptsRepl,1)}</div></div>
+      <div class="stat big"><div class="k">Impact</div><div class="v ${impCls}">${sgn(r.impact)}</div></div>
+    </div>`;
+}
+
+function renderChart(){
+  const list=sorted(filtered().filter(r=>true)).sort((a,b)=>b.impact-a.impact).slice(0,20);
+  const max=Math.max(...list.map(r=>Math.abs(r.impact)),0.01);
+  const c=document.getElementById('chart');
+  c.innerHTML=list.map(r=>{
+    const w=Math.abs(r.impact)/max*100;
+    const clr=POSCLR[r.pos];
+    return `<div class="barrow" data-name="${enc(r.name)}">
+      <div class="bname">${r.name}</div>
+      <div class="btrack"><div class="bfill" style="width:${w}%;background:${clr}"></div></div>
+      <div class="bval" style="color:${clr}">${sgn(r.impact)}</div></div>`;
+  }).join('')||'<div style="color:var(--text-3);padding:8px">No players match the filters.</div>';
+  c.querySelectorAll('.barrow').forEach(row=>{
+    row.onclick=()=>{ST.sel=dec(row.dataset.name);renderSpot();markSel();};
+    row.onmousemove=e=>{const r=list.find(x=>x.name===dec(row.dataset.name));showTip(e,
+      `<b>${r.name}</b> · ${r.team}<br>Impact <b>${sgn(r.impact)}</b> pts<br>Per 90 <b>${sgn(r.impact90,3)}</b>`);};
+    row.onmouseleave=hideTip;
+  });
+}
+
+function renderTable(){
+  const list=sorted(filtered());
+  const gmax=Math.max(...ROWS.map(r=>Math.abs(r.impact)),0.01);
+  const tb=document.getElementById('tbody');
+  tb.innerHTML=list.map(r=>{
+    const pos=r.impact>=0, w=Math.abs(r.impact)/gmax*50;
+    const bar=`<span class="impbar">
+      <i class="lft" style="width:${pos?0:w}%;background:var(--neg)"></i>
+      <i style="width:${pos?w:0}%;background:var(--pos)"></i></span>`;
+    return `<tr data-name="${enc(r.name)}" class="${r.name===ST.sel?'sel':''}">
+      <td class="l rk">${r.rank}</td>
+      <td class="l">${r.name}</td>
+      <td class="l">${r.team}</td>
+      <td class="l"><span class="pdot"><span class="dot" style="background:${POSCLR[r.pos]}"></span>${POSAB[r.pos]}</span></td>
+      <td>${fmt(r.K,1)}</td>
+      <td>${fmt(r.ptsRepl,1)}</td>
+      <td>${bar}<span class="impval ${pos?'pos-p':'neg-p'}">${sgn(r.impact)}</span></td>
+      <td class="impval ${r.impact90>=0?'pos-p':'neg-p'}">${sgn(r.impact90,3)}</td>
+    </tr>`;
+  }).join('');
+  tb.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>{ST.sel=dec(tr.dataset.name);renderSpot();markSel();});
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.toggle('sorted',th.dataset.k===ST.sort);
+    th.classList.toggle('asc',th.dataset.k===ST.sort&&ST.dir===1);
+  });
+}
+function markSel(){document.querySelectorAll('#tbody tr').forEach(tr=>
+  tr.classList.toggle('sel',dec(tr.dataset.name)===ST.sel));}
+
+const enc=s=>s.replace(/"/g,'&quot;'), dec=s=>s.replace(/&quot;/g,'"');
+const tip=document.getElementById('tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;
+  let x=e.clientX+14,y=e.clientY+14;
+  if(x+250>innerWidth)x=e.clientX-260;tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.style.opacity=0;}
+
+// ---- events ----
+document.getElementById('repl').oninput=e=>{ST.q=+e.target.value/100;recompute();};
+document.getElementById('poschips').onclick=e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  ST.pos=c.dataset.pos;
+  document.querySelectorAll('#poschips .chip').forEach(x=>x.classList.toggle('active',x===c));
+  renderAll();
+};
+document.getElementById('teamsel').onchange=e=>{ST.team=e.target.value;renderAll();};
+document.getElementById('search').oninput=e=>{ST.search=e.target.value.toLowerCase().trim();renderAll();};
+document.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;
+  if(ST.sort===k)ST.dir*=-1; else {ST.sort=k;ST.dir=(k==='name'||k==='team'||k==='pos')?1:-1;}
+  renderTable();
+});
+document.getElementById('themebtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const dark=cur? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+};
+
+// team dropdown
+const tsel=document.getElementById('teamsel');
+[...new Set(PLAYERS.map(p=>p.team))].sort().forEach(t=>{
+  const o=document.createElement('option');o.value=t;o.textContent=t;tsel.appendChild(o);});
+// excluded note
+document.getElementById('exsum').textContent=`${DATA.excluded.length} players excluded — no team assigned in the model (fix upstream to include them)`;
+document.getElementById('exlist').textContent=DATA.excluded.join(' · ');
+document.getElementById('gen').textContent=DATA.generated;
+
+recompute();
+</script>
+</body>
+</html>
