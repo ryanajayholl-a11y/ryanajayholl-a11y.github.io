@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Player Impact — Points Above Replacement</title>
+<title>Player Impact: Points Above Replacement</title>
 <style>
   :root{
     --bg:#f4f4f2; --surface:#fcfcfb; --surface-2:#f0efec; --border:#e2e1dc;
@@ -34,6 +34,9 @@
     -webkit-font-smoothing:antialiased;line-height:1.45;}
   .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
   header h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;}
+  header .byline{margin:0 0 10px;color:var(--text-2);font-size:14px;}
+  header .byline a{color:var(--accent);border-bottom:1px solid transparent;transition:border-color .15s ease;}
+  header .byline a:hover,header .byline a:focus-visible{border-bottom-color:var(--accent);}
   header p.sub{margin:0;color:var(--text-2);font-size:15px;max-width:760px;}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);}
   /* toolbar */
@@ -105,6 +108,12 @@
   .impval{font-weight:700;}
   .pos-p{color:var(--pos);} .neg-p{color:var(--neg);}
   .rk{color:var(--text-3);font-weight:600;}
+  /* show more */
+  .morewrap{display:flex;justify-content:center;margin-top:16px;}
+  .morebtn{background:var(--surface);border:1px solid var(--border);color:var(--text-1);
+    padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit;box-shadow:var(--shadow);transition:.12s;}
+  .morebtn:hover{border-color:var(--text-3);background:var(--surface-2);}
   /* footer */
   footer{margin-top:30px;color:var(--text-3);font-size:12.5px;line-height:1.6;}
   footer b{color:var(--text-2);}
@@ -123,7 +132,8 @@
 <button class="themebtn" id="themebtn">◐ Theme</button>
 <div class="wrap">
   <header>
-    <h1>Player Impact — Points Above Replacement</h1>
+    <h1>Player Impact: Points Above Replacement</h1>
+    <p class="byline">By <a href="https://ryan-hollingshead.com" target="_blank" rel="noopener">Ryan Hollingshead</a></p>
     <p class="sub">Projected league points each player adds to their club versus a <b>replacement-level player at the same position</b>. Move the slider to set how good "replacement level" is; everything recomputes live.</p>
   </header>
 
@@ -180,11 +190,11 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="morewrap"><button id="showmore" class="morebtn"></button></div>
 
   <footer>
-    <div><b>Method.</b> Impact = points(current squad) − points(the player's minutes reassigned to a replacement-level player of the same position), pushed through the same team-strength → GF/GA → points pipeline as the model's league table. Replacement level = the chosen percentile of Def/90, Att/90 and Poss/90 <i>within each position</i>, so defenders are judged against defenders and forwards against forwards. League standardisation and coaching xG/xGA are held at baseline.</div>
-    <details><summary id="exsum"></summary><div id="exlist" style="margin-top:6px;"></div></details>
-    <div style="margin-top:8px;">Source: <b>2026_EPL_PS_Projections.xlsx</b> · generated <span id="gen"></span>. Positive impact = above replacement (blue); negative = below (red).</div>
+    <div><b>Methodology:</b> impact = points(current squad) − points(the player's minutes reassigned to a replacement-level player of the same position). Replacement level = the chosen percentile within each position, so defenders are judged against defenders and forwards against forwards. Positive impact = above replacement (blue); negative = below (red).</div>
+    <div style="margin-top:8px;">Reach out with questions or comments at <a href="mailto:ryanholl@alumni.stanford.edu" style="color:var(--pos)">ryanholl@alumni.stanford.edu</a>.</div>
   </footer>
 </div>
 <div id="tip"></div>
@@ -233,7 +243,8 @@ function computeAll(q){
 }
 
 // ---- state ----
-let ST={q:0.20, pos:'All', team:'All', search:'', sort:'impact', dir:-1, sel:null};
+let ST={q:0.20, pos:'All', team:'All', search:'', sort:'impact', dir:-1, sel:null, expanded:false};
+const PAGE=20;
 let ROWS=[];
 
 function filtered(){
@@ -261,7 +272,9 @@ function renderAll(){ renderSpot(); renderChart(); renderTable();
   document.getElementById('replval').textContent = ordinal(ST.q*100)+' pctile';
   const f=filtered();
   document.getElementById('chartsub').textContent='· '+labelScope();
-  document.getElementById('tablesub').textContent='· '+f.length+' shown';
+  document.getElementById('tablesub').textContent =
+    f.length<=PAGE ? '· '+f.length+' shown'
+    : (ST.expanded ? '· all '+f.length+' shown' : '· showing '+PAGE+' of '+f.length);
 }
 function ordinal(n){n=Math.round(n);const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function labelScope(){const parts=[];if(ST.pos!=='All')parts.push(POSAB[ST.pos]);if(ST.team!=='All')parts.push(ST.team);return parts.length?parts.join(' · '):'all positions & teams';}
@@ -309,9 +322,10 @@ function renderChart(){
 
 function renderTable(){
   const list=sorted(filtered());
+  const shown=ST.expanded?list:list.slice(0,PAGE);
   const gmax=Math.max(...ROWS.map(r=>Math.abs(r.impact)),0.01);
   const tb=document.getElementById('tbody');
-  tb.innerHTML=list.map(r=>{
+  tb.innerHTML=shown.map(r=>{
     const pos=r.impact>=0, w=Math.abs(r.impact)/gmax*50;
     const bar=`<span class="impbar">
       <i class="lft" style="width:${pos?0:w}%;background:var(--neg)"></i>
@@ -332,6 +346,9 @@ function renderTable(){
     th.classList.toggle('sorted',th.dataset.k===ST.sort);
     th.classList.toggle('asc',th.dataset.k===ST.sort&&ST.dir===1);
   });
+  const btn=document.getElementById('showmore');
+  if(list.length<=PAGE){btn.style.display='none';}
+  else{btn.style.display='';btn.textContent=ST.expanded?'Show fewer':`Show all ${list.length} players`;}
 }
 function markSel(){document.querySelectorAll('#tbody tr').forEach(tr=>
   tr.classList.toggle('sel',dec(tr.dataset.name)===ST.sel));}
@@ -353,6 +370,7 @@ document.getElementById('poschips').onclick=e=>{
 };
 document.getElementById('teamsel').onchange=e=>{ST.team=e.target.value;renderAll();};
 document.getElementById('search').oninput=e=>{ST.search=e.target.value.toLowerCase().trim();renderAll();};
+document.getElementById('showmore').onclick=()=>{ST.expanded=!ST.expanded;renderTable();renderAll();};
 document.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
   const k=th.dataset.k;
   if(ST.sort===k)ST.dir*=-1; else {ST.sort=k;ST.dir=(k==='name'||k==='team'||k==='pos')?1:-1;}
@@ -368,11 +386,6 @@ document.getElementById('themebtn').onclick=()=>{
 const tsel=document.getElementById('teamsel');
 [...new Set(PLAYERS.map(p=>p.team))].sort().forEach(t=>{
   const o=document.createElement('option');o.value=t;o.textContent=t;tsel.appendChild(o);});
-// excluded note
-document.getElementById('exsum').textContent=`${DATA.excluded.length} players excluded — no team assigned in the model (fix upstream to include them)`;
-document.getElementById('exlist').textContent=DATA.excluded.join(' · ');
-document.getElementById('gen').textContent=DATA.generated;
-
 recompute();
 </script>
 </body>
