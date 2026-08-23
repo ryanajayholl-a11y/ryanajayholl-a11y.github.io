@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Premier League 2026-27: Projected Table</title>
+<style>
+  :root{
+    --bg:#f4f4f2; --surface:#fcfcfb; --surface-2:#f0efec; --border:#e2e1dc;
+    --text-1:#0b0b0b; --text-2:#52514e; --text-3:#8a8984;
+    --euro:#1baf7a; --mid:#2a78d6; --releg:#e34948; --accent:#2a78d6;
+    --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      --bg:#141413; --surface:#1e1e1c; --surface-2:#262624; --border:#33322f;
+      --text-1:#f5f5f0; --text-2:#c3c2b7; --text-3:#8f8e86;
+      --euro:#22c58a; --mid:#3987e5; --releg:#e66767; --accent:#3987e5;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141413; --surface:#1e1e1c; --surface-2:#262624; --border:#33322f;
+    --text-1:#f5f5f0; --text-2:#c3c2b7; --text-3:#8f8e86;
+    --euro:#22c58a; --mid:#3987e5; --releg:#e66767; --accent:#3987e5;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text-1);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.45;}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 80px;}
+  header h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;}
+  header .byline{margin:0 0 10px;color:var(--text-2);font-size:14px;}
+  header .byline a{color:var(--accent);border-bottom:1px solid transparent;transition:border-color .15s ease;}
+  header .byline a:hover{border-bottom-color:var(--accent);}
+  header p.sub{margin:0;color:var(--text-2);font-size:15px;max-width:780px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);}
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0;}
+  .tile{padding:15px 16px;}
+  .tile .k{font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;}
+  .tile .v{font-size:20px;font-weight:750;letter-spacing:-.02em;margin-top:4px;line-height:1.15;}
+  .tile .s{font-size:12.5px;color:var(--text-2);margin-top:2px;font-variant-numeric:tabular-nums;}
+  h2.sec{font-size:15px;font-weight:700;margin:26px 2px 12px;letter-spacing:-.01em;}
+  h2.sec span{color:var(--text-3);font-weight:500;}
+  .legend{display:flex;gap:16px;margin:2px 2px 12px;font-size:12.5px;color:var(--text-2);flex-wrap:wrap;}
+  .legend .li{display:flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  /* table */
+  .tablewrap{overflow-x:auto;border-radius:14px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);}
+  thead th{position:sticky;top:0;background:var(--surface);text-align:right;padding:11px 10px;
+    font-size:11.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.03em;
+    border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;}
+  thead th.l{text-align:left;}
+  thead th:hover{color:var(--text-1);}
+  th.sorted::after{content:" \25BE";font-size:10px;}
+  th.sorted.asc::after{content:" \25B4";}
+  tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);
+    font-variant-numeric:tabular-nums;white-space:nowrap;}
+  tbody td.l{text-align:left;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr.sel{background:color-mix(in srgb,var(--accent) 12%,var(--surface));}
+  .tdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:9px;vertical-align:middle;box-shadow:0 0 0 1px var(--text-3);}
+  .tdot-sm{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 5px 0 7px;vertical-align:middle;box-shadow:0 0 0 1px var(--text-3);}
+  tr.z-euro td:first-child{box-shadow:inset 3px 0 0 var(--euro);}
+  tr.z-releg td:first-child{box-shadow:inset 3px 0 0 var(--releg);}
+  .team-cell{display:inline-flex;align-items:center;font-weight:600;}
+  .rk{color:var(--text-3);font-weight:600;}
+  .pts{font-weight:750;}
+  .pos-p{color:var(--euro);} .neg-p{color:var(--releg);}
+  .prob{display:inline-block;padding:2px 8px;border-radius:5px;min-width:34px;text-align:center;font-variant-numeric:tabular-nums;}
+  /* top players list */
+  .chart{padding:14px 18px 16px;}
+  .prow{display:grid;grid-template-columns:20px 1.25fr 40px 1fr 52px;align-items:center;gap:10px;height:24px;border-radius:6px;}
+  .prow:hover{background:var(--surface-2);}
+  .prow.sel{background:color-mix(in srgb,var(--accent) 13%,var(--surface));}
+  .prk{font-size:12px;color:var(--text-3);font-weight:600;text-align:right;}
+  .pname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pteam{color:var(--text-3);font-weight:600;font-size:11px;margin-left:6px;}
+  .ppos{font-size:10px;color:var(--text-3);font-weight:700;letter-spacing:.03em;text-align:right;}
+  .ptrack{height:13px;background:var(--surface-2);border-radius:4px;position:relative;overflow:hidden;}
+  .pfill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:4px;}
+  .pval{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+  .pu{font-size:9.5px;color:var(--text-3);font-weight:600;margin-left:1px;}
+  /* scatter */
+  .scatter{padding:18px 18px 8px;}
+  .scatter svg{width:100%;height:auto;display:block;overflow:visible;}
+  .dlabel{font-size:10px;font-weight:700;fill:var(--text-2);pointer-events:none;}
+  .axis{stroke:var(--border);stroke-width:1;}
+  .guide{stroke:var(--text-3);stroke-width:1;stroke-dasharray:3 4;opacity:.5;}
+  .axlab{font-size:11px;fill:var(--text-3);font-weight:600;}
+  .quad{font-size:10.5px;fill:var(--text-3);opacity:.8;}
+  /* manager impact diverging bars */
+  .mrow{display:grid;grid-template-columns:186px 1fr 50px;align-items:center;gap:12px;height:26px;border-radius:6px;}
+  .mrow:hover{background:var(--surface-2);}
+  .mrow.sel{background:color-mix(in srgb,var(--accent) 13%,var(--surface));}
+  .mname{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mname .mteam{color:var(--text-3);font-weight:600;font-size:11px;margin-left:6px;}
+  .mrow:hover .mname,.mrow.sel .mname{color:var(--text-1);}
+  .mrow.sel .mname{font-weight:700;}
+  .mtrack{display:grid;grid-template-columns:1fr 1fr;height:14px;position:relative;}
+  .mtrack::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--border);}
+  .mtrack i{display:block;height:100%;}
+  .mtrack .lft{justify-self:end;border-radius:4px 0 0 4px;}
+  .mtrack .rgt{justify-self:start;border-radius:0 4px 4px 0;}
+  .mval{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+  footer{margin-top:30px;color:var(--text-3);font-size:12.5px;line-height:1.6;}
+  footer b{color:var(--text-2);}
+  footer a{color:var(--accent);}
+  .themebtn{position:fixed;top:14px;right:16px;background:var(--surface);border:1px solid var(--border);
+    color:var(--text-2);border-radius:9px;padding:7px 11px;font-size:13px;cursor:pointer;box-shadow:var(--shadow);}
+  #tip{position:fixed;pointer-events:none;background:var(--text-1);color:var(--surface);
+    padding:8px 11px;border-radius:8px;font-size:12.5px;line-height:1.5;opacity:0;transition:opacity .1s;
+    z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.28);max-width:230px;}
+  #tip b{font-weight:700;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:860px){.twocol{grid-template-columns:1fr;} .tiles{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.barrow{grid-template-columns:112px 1fr 42px;}}
+</style>
+</head>
+<body>
+<button class="themebtn" id="themebtn">◐ Theme</button>
+<div class="wrap">
+  <header>
+    <h1>Premier League 2026-27: Projected Table</h1>
+    <p class="byline">By <a href="https://ryan-hollingshead.com" target="_blank" rel="noopener">Ryan Hollingshead</a></p>
+    <p class="sub">My projected final standings for the 2026-27 season, built from the same player-strength model as my player-impact tool.</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <h2 class="sec">Projected final table and probabilities</h2>
+  <div class="legend">
+    <span class="li"><span class="swatch" style="background:var(--euro)"></span>European places (top 5)</span>
+    <span class="li"><span class="swatch" style="background:var(--releg)"></span>Relegation (bottom 3)</span>
+  </div>
+  <div class="card tablewrap">
+    <table id="tbl">
+      <thead><tr>
+        <th class="l" data-k="rank">#</th>
+        <th class="l" data-k="team">Team</th>
+        <th data-k="gf">GF</th>
+        <th data-k="ga">GA</th>
+        <th data-k="gd">GD</th>
+        <th data-k="pts">Pts</th>
+        <th data-k="title">Title</th>
+        <th data-k="top5">Top 5</th>
+        <th data-k="releg">Rel</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="twocol">
+    <div>
+      <h2 class="sec">Top players <span>· by the model's player scores</span></h2>
+      <div class="card chart" id="players"></div>
+    </div>
+    <div>
+      <h2 class="sec">Attack vs defense <span>· per projected goals</span></h2>
+      <div class="card scatter" id="scatter"></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Manager impact <span>· expected goal difference per game (xG − xG allowed)</span></h2>
+  <div class="card chart" id="managers"></div>
+
+  <footer>
+    <div><b>Methodology:</b> each team's projected goals for/against come from its squad's minute-weighted strength blended 50/50 with coaching xG/xGA, standardized across the league and converted to points. <b>Title / Top 5 / Rel</b> probabilities come from 20,000 Monte Carlo simulations of the season.</div>
+    <div style="margin-top:8px;">Reach out with questions or comments at <a href="mailto:ryanholl@alumni.stanford.edu">ryanholl@alumni.stanford.edu</a>.</div>
+  </footer>
+</div>
+<div id="tip"></div>
+<script id="data" type="application/json">{"teams":[{"team":"Arsenal","abbr":"ARS","clr":"#EF0107","gp":38,"w":21.37,"d":9.017,"l":7.613,"gf":67.304,"ga":33.844,"gd":33.46,"pts":73.126,"xg":1.694,"xga":0.804,"ps90":17.434,"def90":4.239,"att90":6.659,"poss90":6.537,"players":20,"rank":1,"zone":"euro","title":37.8,"top5":84.9,"releg":0.0},{"team":"Manchester City","abbr":"MCI","clr":"#6CABDD","gp":38,"w":20.578,"d":7.495,"l":9.927,"gf":74.461,"ga":48.03,"gd":26.43,"pts":69.229,"xg":1.764,"xga":1.383,"ps90":19.141,"def90":4.156,"att90":8.044,"poss90":6.941,"players":18,"rank":2,"zone":"euro","title":19.7,"top5":68.5,"releg":0.3},{"team":"Chelsea","abbr":"CHE","clr":"#2A62C4","gp":38,"w":19.178,"d":7.43,"l":11.392,"gf":71.532,"ga":52.084,"gd":19.448,"pts":64.964,"xg":1.97,"xga":1.225,"ps90":15.663,"def90":3.158,"att90":6.709,"poss90":5.797,"players":22,"rank":3,"zone":"euro","title":10.9,"top5":53.7,"releg":0.8},{"team":"Liverpool","abbr":"LIV","clr":"#C8102E","gp":38,"w":18.289,"d":7.406,"l":12.305,"gf":69.576,"ga":54.528,"gd":15.047,"pts":62.272,"xg":1.655,"xga":1.429,"ps90":17.267,"def90":3.526,"att90":7.772,"poss90":5.968,"players":15,"rank":4,"zone":"euro","title":7.4,"top5":44.6,"releg":1.5},{"team":"Manchester United","abbr":"MUN","clr":"#DA020E","gp":38,"w":17.141,"d":8.358,"l":12.501,"gf":61.214,"ga":49.808,"gd":11.406,"pts":59.781,"xg":1.404,"xga":1.424,"ps90":17.258,"def90":4.63,"att90":6.985,"poss90":5.643,"players":22,"rank":5,"zone":"euro","title":5.2,"top5":37.0,"releg":2.0},{"team":"Brighton & Hove Albion","abbr":"BHA","clr":"#2C7BE0","gp":38,"w":16.692,"d":8.762,"l":12.545,"gf":57.755,"ga":47.704,"gd":10.051,"pts":58.84,"xg":1.534,"xga":1.345,"ps90":15.635,"def90":4.765,"att90":5.458,"poss90":5.412,"players":19,"rank":6,"zone":"mid","title":4.1,"top5":33.8,"releg":2.3},{"team":"Fulham","abbr":"FUL","clr":"#000000","gp":38,"w":16.102,"d":9.629,"l":12.269,"gf":51.218,"ga":42.259,"gd":8.96,"pts":57.935,"xg":1.417,"xga":1.27,"ps90":15.405,"def90":5.515,"att90":4.106,"poss90":5.784,"players":18,"rank":7,"zone":"mid","title":3.5,"top5":31.3,"releg":2.1},{"team":"Tottenham Hotspur","abbr":"TOT","clr":"#22346E","gp":38,"w":15.805,"d":8.758,"l":13.437,"gf":55.685,"ga":49.986,"gd":5.699,"pts":56.172,"xg":1.58,"xga":1.41,"ps90":14.676,"def90":4.539,"att90":4.562,"poss90":5.574,"players":20,"rank":8,"zone":"mid","title":2.4,"top5":25.1,"releg":3.6},{"team":"Leeds United","abbr":"LEE","clr":"#F5C518","gp":38,"w":15.297,"d":9.614,"l":13.089,"gf":49.406,"ga":44.417,"gd":4.989,"pts":55.504,"xg":1.422,"xga":1.289,"ps90":14.415,"def90":5.766,"att90":4.305,"poss90":4.344,"players":17,"rank":9,"zone":"mid","title":1.9,"top5":22.5,"releg":3.7},{"team":"Newcastle United","abbr":"NEW","clr":"#000000","gp":38,"w":14.749,"d":8.844,"l":14.408,"gf":52.677,"ga":51.966,"gd":0.71,"pts":53.09,"xg":1.279,"xga":1.395,"ps90":14.968,"def90":4.439,"att90":5.749,"poss90":4.78,"players":20,"rank":10,"zone":"mid","title":1.2,"top5":17.1,"releg":6.5},{"team":"Brentford","abbr":"BRE","clr":"#E30613","gp":38,"w":14.834,"d":8.452,"l":14.714,"gf":55.2,"ga":54.887,"gd":0.314,"pts":52.953,"xg":1.587,"xga":1.432,"ps90":13.641,"def90":4.838,"att90":5.561,"poss90":3.241,"players":18,"rank":11,"zone":"mid","title":1.5,"top5":17.2,"releg":6.8},{"team":"Nottingham Forest","abbr":"NFO","clr":"#E53935","gp":38,"w":14.698,"d":8.633,"l":14.669,"gf":53.806,"ga":53.782,"gd":0.024,"pts":52.726,"xg":1.559,"xga":1.353,"ps90":13.254,"def90":4.293,"att90":4.938,"poss90":4.024,"players":19,"rank":12,"zone":"mid","title":1.1,"top5":16.1,"releg":7.3},{"team":"Aston Villa","abbr":"AVL","clr":"#9B3B54","gp":38,"w":14.373,"d":8.816,"l":14.811,"gf":51.951,"ga":53.137,"gd":-1.186,"pts":51.934,"xg":1.348,"xga":1.391,"ps90":14.157,"def90":3.783,"att90":4.762,"poss90":5.612,"players":18,"rank":13,"zone":"mid","title":1.2,"top5":14.5,"releg":7.7},{"team":"Everton","abbr":"EVE","clr":"#2A54B8","gp":38,"w":13.414,"d":9.526,"l":15.06,"gf":45.475,"ga":49.878,"gd":-4.404,"pts":49.768,"xg":1.228,"xga":1.333,"ps90":13.369,"def90":5.267,"att90":4.769,"poss90":3.332,"players":18,"rank":14,"zone":"mid","title":0.5,"top5":9.5,"releg":11.2},{"team":"Bournemouth","abbr":"BOU","clr":"#DA291C","gp":38,"w":13.742,"d":7.954,"l":16.303,"gf":55.573,"ga":61.63,"gd":-6.057,"pts":49.181,"xg":1.462,"xga":1.545,"ps90":13.793,"def90":3.972,"att90":6.078,"poss90":3.743,"players":18,"rank":15,"zone":"mid","title":0.7,"top5":10.3,"releg":12.5},{"team":"Crystal Palace","abbr":"CRY","clr":"#3159A8","gp":38,"w":13.525,"d":7.608,"l":16.867,"gf":57.111,"ga":64.948,"gd":-7.836,"pts":48.184,"xg":1.685,"xga":1.466,"ps90":12.35,"def90":3.855,"att90":5.87,"poss90":2.624,"players":20,"rank":16,"zone":"mid","title":0.7,"top5":9.2,"releg":14.3},{"team":"Ipswich Town","abbr":"IPS","clr":"#5A79C0","gp":38,"w":10.688,"d":8.006,"l":19.306,"gf":48.046,"ga":68.937,"gd":-20.89,"pts":40.071,"xg":1.317,"xga":1.647,"ps90":11.903,"def90":3.495,"att90":4.924,"poss90":3.484,"players":21,"rank":17,"zone":"mid","title":0.1,"top5":2.1,"releg":36.7},{"team":"Sunderland","abbr":"SUN","clr":"#EB3B4E","gp":38,"w":10.203,"d":9.371,"l":18.426,"gf":38.798,"ga":59.232,"gd":-20.434,"pts":39.979,"xg":0.989,"xga":1.464,"ps90":11.776,"def90":4.232,"att90":4.222,"poss90":3.322,"players":17,"rank":18,"zone":"releg","title":0.0,"top5":1.2,"releg":41.1},{"team":"Coventry City","abbr":"COV","clr":"#4B92DB","gp":38,"w":9.775,"d":7.842,"l":20.383,"gf":46.856,"ga":72.554,"gd":-25.698,"pts":37.167,"xg":1.257,"xga":1.59,"ps90":11.372,"def90":3.173,"att90":5.124,"poss90":3.074,"players":22,"rank":19,"zone":"releg","title":0.0,"top5":1.2,"releg":46.9},{"team":"Hull City","abbr":"HUL","clr":"#F18A01","gp":38,"w":4.493,"d":8.567,"l":24.94,"gf":30.071,"ga":80.104,"gd":-50.033,"pts":22.047,"xg":0.877,"xga":2.196,"ps90":9.664,"def90":4.302,"att90":2.816,"poss90":2.545,"players":17,"rank":20,"zone":"releg","title":0.0,"top5":0.0,"releg":92.7}],"players":[{"name":"Virgil van Dijk","team":"Liverpool","abbr":"LIV","clr":"#C8102E","pos":"Defender","tps":1014.9,"pct":100.0},{"name":"Bruno Fernandes","team":"Manchester United","abbr":"MUN","clr":"#DA020E","pos":"Midfielder","tps":843.0,"pct":99.7},{"name":"Declan Rice","team":"Arsenal","abbr":"ARS","clr":"#EF0107","pos":"Midfielder","tps":763.9,"pct":99.5},{"name":"Erling Haaland","team":"Manchester City","abbr":"MCI","clr":"#6CABDD","pos":"Forward","tps":762.5,"pct":99.2},{"name":"Jan Paul van Hecke","team":"Tottenham Hotspur","abbr":"TOT","clr":"#22346E","pos":"Defender","tps":712.0,"pct":98.9},{"name":"Maxence Lacroix","team":"Chelsea","abbr":"CHE","clr":"#2A62C4","pos":"Defender","tps":708.3,"pct":98.7},{"name":"Joachim Andersen","team":"Fulham","abbr":"FUL","clr":"#000000","pos":"Defender","tps":706.1,"pct":98.4},{"name":"Marc Guéhi","team":"Manchester City","abbr":"MCI","clr":"#6CABDD","pos":"Defender","tps":705.4,"pct":98.2},{"name":"Lewis Dunk","team":"Brighton & Hove Albion","abbr":"BHA","clr":"#2C7BE0","pos":"Defender","tps":686.5,"pct":97.9},{"name":"James Tarkowski","team":"Everton","abbr":"EVE","clr":"#2A54B8","pos":"Defender","tps":662.0,"pct":97.6},{"name":"Dominik Szoboszlai","team":"Liverpool","abbr":"LIV","clr":"#C8102E","pos":"Midfielder","tps":659.0,"pct":97.4},{"name":"Cole Palmer","team":"Chelsea","abbr":"CHE","clr":"#2A62C4","pos":"Midfielder","tps":654.2,"pct":97.1},{"name":"Nathan Collins","team":"Brentford","abbr":"BRE","clr":"#E30613","pos":"Defender","tps":652.9,"pct":96.8},{"name":"Enzo Fernández","team":"Chelsea","abbr":"CHE","clr":"#2A62C4","pos":"Midfielder","tps":644.5,"pct":96.6},{"name":"Sepp van den Berg","team":"Brentford","abbr":"BRE","clr":"#E30613","pos":"Defender","tps":628.1,"pct":96.3}],"managers":[{"coach":"Mikel Arteta","club":"Arsenal","abbr":"ARS","clr":"#EF0107","xg":1.69,"xga":0.8,"net":0.889},{"coach":"Xabi Alonso","club":"Chelsea","abbr":"CHE","clr":"#2A62C4","xg":1.97,"xga":1.22,"net":0.746},{"coach":"Enzo Maresca","club":"Manchester City","abbr":"MCI","clr":"#6CABDD","xg":1.76,"xga":1.38,"net":0.381},{"coach":"Andoni Iraola","club":"Liverpool","abbr":"LIV","clr":"#C8102E","xg":1.66,"xga":1.43,"net":0.226},{"coach":"Pierre Sage","club":"Crystal Palace","abbr":"CRY","clr":"#3159A8","xg":1.68,"xga":1.47,"net":0.219},{"coach":"Oliver Glasner","club":"Nottingham Forest","abbr":"NFO","clr":"#E53935","xg":1.56,"xga":1.35,"net":0.206},{"coach":"Fabian Hurzeler","club":"Brighton & Hove Albion","abbr":"BHA","clr":"#2C7BE0","xg":1.53,"xga":1.34,"net":0.189},{"coach":"Roberto De Zerbi","club":"Tottenham Hotspur","abbr":"TOT","clr":"#22346E","xg":1.58,"xga":1.41,"net":0.17},{"coach":"Keith Andrews","club":"Brentford","abbr":"BRE","clr":"#E30613","xg":1.59,"xga":1.43,"net":0.155},{"coach":"Alvaro Arbeloa","club":"Fulham","abbr":"FUL","clr":"#000000","xg":1.42,"xga":1.27,"net":0.148},{"coach":"Daniel Farke","club":"Leeds United","abbr":"LEE","clr":"#F5C518","xg":1.42,"xga":1.29,"net":0.133},{"coach":"Michael Carrick","club":"Manchester United","abbr":"MUN","clr":"#DA020E","xg":1.4,"xga":1.42,"net":-0.02},{"coach":"Unai Emery","club":"Aston Villa","abbr":"AVL","clr":"#9B3B54","xg":1.35,"xga":1.39,"net":-0.043},{"coach":"Marco Rose","club":"Bournemouth","abbr":"BOU","clr":"#DA291C","xg":1.46,"xga":1.54,"net":-0.082},{"coach":"David Moyes","club":"Everton","abbr":"EVE","clr":"#2A54B8","xg":1.23,"xga":1.33,"net":-0.105},{"coach":"Matthias Jaissle","club":"Newcastle United","abbr":"NEW","clr":"#000000","xg":1.28,"xga":1.39,"net":-0.116},{"coach":"Gary O'Neil","club":"Ipswich Town","abbr":"IPS","clr":"#5A79C0","xg":1.32,"xga":1.65,"net":-0.331},{"coach":"Frank Lampard","club":"Coventry City","abbr":"COV","clr":"#4B92DB","xg":1.26,"xga":1.59,"net":-0.334},{"coach":"Regis Le Bris","club":"Sunderland","abbr":"SUN","clr":"#EB3B4E","xg":0.99,"xga":1.46,"net":-0.475},{"coach":"Sergej Jakirović","club":"Hull City","abbr":"HUL","clr":"#F18A01","xg":0.88,"xga":2.2,"net":-1.319}]}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const T = D.teams, PL = D.players, MG = D.managers;
+const ZC = {euro:'var(--euro)', mid:'var(--mid)', releg:'var(--releg)'};
+const POSAB = {Defender:'DEF', Midfielder:'MID', Forward:'FWD'};
+const fmt=(x,d=1)=>x.toLocaleString('en',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=(x,d=0)=>(x>=0?'+':'')+fmt(x,d);
+const pf=x=> x>=0.5 ? Math.round(x)+'%' : x>0 ? '<1%' : '—';
+const tint=(v,c)=>`color-mix(in srgb, var(${c}) ${(v*0.65).toFixed(1)}%, transparent)`;
+let ST={sort:'pts',dir:-1};
+
+// ---------- stat tiles ----------
+function tiles(){
+  const champ=[...T].sort((a,b)=>b.pts-a.pts)[0];
+  const mostGF=[...T].sort((a,b)=>b.gf-a.gf)[0];
+  const bestGA=[...T].sort((a,b)=>a.ga-b.ga)[0];
+  const releg=[...T].sort((a,b)=>a.pts-b.pts).slice(0,3).reverse().map(t=>t.abbr).join(' · ');
+  const el=document.getElementById('tiles');
+  const tile=(k,v,s)=>`<div class="card tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  el.innerHTML =
+    tile('Projected champion', champ.team, fmt(champ.pts,1)+' pts')+
+    tile('Best attack', mostGF.team, Math.round(mostGF.gf)+' GF')+
+    tile('Best defense', bestGA.team, Math.round(bestGA.ga)+' GA')+
+    tile('Relegated (bottom 3)', releg, 'projected to go down');
+}
+
+// ---------- table ----------
+function renderTable(){
+  const list=[...T].sort((a,b)=>{
+    let x=a[ST.sort],y=b[ST.sort];
+    if(ST.sort==='team'){return ST.dir*String(x).localeCompare(String(y));}
+    return ST.dir*(x-y);
+  });
+  const tb=document.getElementById('tbody');
+  tb.innerHTML=list.map(t=>`
+    <tr class="z-${t.zone}">
+      <td class="l rk">${t.rank}</td>
+      <td class="l"><span class="team-cell"><span class="tdot" style="background:${t.clr}"></span>${t.team}</span></td>
+      <td>${Math.round(t.gf)}</td><td>${Math.round(t.ga)}</td>
+      <td class="${t.gd>=0?'pos-p':'neg-p'}">${sgn(t.gd,0)}</td>
+      <td class="pts">${fmt(t.pts,1)}</td>
+      <td><span class="prob" style="background:${tint(t.title,'--euro')}">${pf(t.title)}</span></td><td><span class="prob" style="background:${tint(t.top5,'--euro')}">${pf(t.top5)}</span></td><td><span class="prob" style="background:${tint(t.releg,'--releg')}">${pf(t.releg)}</span></td>
+    </tr>`).join('');
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.toggle('sorted',th.dataset.k===ST.sort);
+    th.classList.toggle('asc',th.dataset.k===ST.sort&&ST.dir===1);
+  });
+}
+
+// ---------- top players leaderboard ----------
+function renderPlayers(){
+  const max=Math.max(...PL.map(p=>p.tps));
+  const c=document.getElementById('players');
+  c.innerHTML=PL.map((p,i)=>`
+    <div class="prow" data-i="${i}">
+      <div class="prk">${i+1}</div>
+      <div class="pname">${p.name}<span class="tdot-sm" style="background:${p.clr}"></span><span class="pteam">${p.abbr}</span></div>
+      <div class="ppos">${POSAB[p.pos]||''}</div>
+      <div class="ptrack"><div class="pfill" style="width:${(p.tps/max*100).toFixed(1)}%"></div></div>
+      <div class="pval">${p.pct.toFixed(1)}</div>
+    </div>`).join('');
+  c.querySelectorAll('.prow').forEach(row=>{
+    row.onmousemove=e=>{const p=PL[+row.dataset.i];
+      tip(e,`<b>${p.name}</b> · ${p.team}<br>${p.pos} · ${p.pct.toFixed(1)} percentile`);};
+    row.onmouseleave=hideTip;
+  });
+}
+
+// ---------- attack vs defense scatter ----------
+function renderScatter(){
+  const W=440,H=380,P={t:26,r:20,b:44,l:46};
+  const gf=T.map(t=>t.gf), ga=T.map(t=>t.ga);
+  const xmin=Math.min(...gf)-3,xmax=Math.max(...gf)+3;
+  const ymin=Math.min(...ga)-3,ymax=Math.max(...ga)+3;
+  const avgGF=gf.reduce((a,b)=>a+b,0)/gf.length, avgGA=ga.reduce((a,b)=>a+b,0)/ga.length;
+  const sx=v=>P.l+(v-xmin)/(xmax-xmin)*(W-P.l-P.r);
+  const sy=v=>P.t+(v-ymin)/(ymax-ymin)*(H-P.t-P.b); // higher GA lower on screen
+  const dots=T.map(t=>`<g class="dot" data-abbr="${t.abbr}">
+      <circle cx="${sx(t.gf).toFixed(1)}" cy="${sy(t.ga).toFixed(1)}" r="5"
+        fill="${t.clr}" stroke="var(--text-3)" stroke-width="1.2"/>
+      <text class="dlabel" x="${(sx(t.gf)+8).toFixed(1)}" y="${(sy(t.ga)+3.5).toFixed(1)}">${t.abbr}</text>
+    </g>`).join('');
+  document.getElementById('scatter').innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Attack versus defense scatter">
+      <line class="guide" x1="${sx(avgGF)}" y1="${P.t}" x2="${sx(avgGF)}" y2="${H-P.b}"/>
+      <line class="guide" x1="${P.l}" y1="${sy(avgGA)}" x2="${W-P.r}" y2="${sy(avgGA)}"/>
+      <line class="axis" x1="${P.l}" y1="${H-P.b}" x2="${W-P.r}" y2="${H-P.b}"/>
+      <line class="axis" x1="${P.l}" y1="${P.t}" x2="${P.l}" y2="${H-P.b}"/>
+      <text class="quad" x="${W-P.r}" y="${P.t+2}" text-anchor="end">strong attack + defense ↗</text>
+      <text class="axlab" x="${(P.l+(W-P.r))/2}" y="${H-8}" text-anchor="middle">Projected goals for →</text>
+      <text class="axlab" transform="translate(14,${(P.t+(H-P.b))/2}) rotate(-90)" text-anchor="middle">fewer goals against →</text>
+      ${dots}
+    </svg>`;
+  document.querySelectorAll('#scatter .dot').forEach(g=>{
+    g.onmousemove=e=>{const t=T.find(x=>x.abbr===g.dataset.abbr);
+      tip(e,`<b>${t.team}</b><br>GF ${Math.round(t.gf)} · GA ${Math.round(t.ga)}<br>${fmt(t.pts,1)} pts`);};
+    g.onmouseleave=hideTip;
+  });
+}
+
+// ---------- manager impact ----------
+function renderManagers(){
+  const max=Math.max(...MG.map(m=>Math.abs(m.net)),0.01);
+  const c=document.getElementById('managers');
+  c.innerHTML=MG.map((m,i)=>{
+    const pos=m.net>=0, w=(Math.abs(m.net)/max*100).toFixed(1);
+    return `<div class="mrow" data-i="${i}">
+      <div class="mname">${m.coach}<span class="mteam">${m.abbr}</span></div>
+      <div class="mtrack">
+        <i class="lft" style="width:${pos?0:w}%;background:var(--releg)"></i>
+        <i class="rgt" style="width:${pos?w:0}%;background:var(--mid)"></i>
+      </div>
+      <div class="mval" style="color:${pos?'var(--mid)':'var(--releg)'}">${sgn(m.net,2)}</div>
+    </div>`;
+  }).join('');
+  c.querySelectorAll('.mrow').forEach(row=>{
+    row.onmousemove=e=>{const m=MG[+row.dataset.i];
+      tip(e,`<b>${m.coach}</b> · ${m.club}<br>xG ${fmt(m.xg,2)} · xGA ${fmt(m.xga,2)}<br>Net <b>${sgn(m.net,2)}</b>`);};
+    row.onmouseleave=hideTip;
+  });
+}
+
+function renderAll(){ tiles(); renderTable(); renderPlayers(); renderScatter(); renderManagers(); }
+
+// tooltip + theme
+const tipEl=document.getElementById('tip');
+function tip(e,html){tipEl.innerHTML=html;tipEl.style.opacity=1;
+  let x=e.clientX+14,y=e.clientY+14; if(x+230>innerWidth)x=e.clientX-240;
+  tipEl.style.left=x+'px';tipEl.style.top=y+'px';}
+function hideTip(){tipEl.style.opacity=0;}
+document.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;
+  if(ST.sort===k)ST.dir*=-1; else{ST.sort=k;ST.dir=(k==='team')?1:-1;}
+  renderTable();
+});
+document.getElementById('themebtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const dark=cur? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+};
+renderAll();
+</script>
+</body>
+</html>
